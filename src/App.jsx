@@ -1,0 +1,94 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
+import ProtectedRoute from './components/ProtectedRoute';
+import InactivoModal from './components/InactivoModal';
+
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Negocios from './pages/Negocios';
+import Programas from './pages/Programas';
+import Cursos from './pages/Cursos';
+import Postulaciones from './pages/Postulaciones';
+import Usuarios from './pages/Usuarios';
+import Perfil from './pages/Perfil';
+import Avisos from './pages/Avisos';
+import AvisoDetalle from './pages/AvisoDetalle';
+import Enlaces from './pages/Enlaces';
+import Contacto from './pages/Contacto';
+import JovenesConstruyendoFuturo from './pages/JovenesConstruyendoFuturo';
+import Inversiones from './pages/Inversiones';
+import MisCampanas from './pages/MisCampanas';
+import MisInversiones from './pages/MisInversiones';
+import CampanasAdmin from './pages/admin/CampanasAdmin';
+
+import ClienteDashboard from './pages/cliente/Dashboard';
+import MisNegocios from './pages/cliente/MisNegocios';
+import ProgramasDisponibles from './pages/cliente/ProgramasDisponibles';
+import MisPostulaciones from './pages/cliente/MisPostulaciones';
+import CursosDisponibles from './pages/cliente/CursosDisponibles';
+import ClienteAvisos from './pages/cliente/Avisos';
+import ClienteRecursos from './pages/cliente/Recursos';
+import ClienteContacto from './pages/cliente/Contacto';
+
+import PagoExitoso from './pages/PagoExitoso';
+import PagoFallido from './pages/PagoFallido';
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: { background: '#363636', color: '#fff' },
+          success: { duration: 3000, iconTheme: { primary: '#4ade80', secondary: '#fff' } },
+          error:   { duration: 4000, iconTheme: { primary: '#ef4444', secondary: '#fff' } },
+        }}
+      />
+
+      <InactivoModal />
+
+      <Routes>
+        <Route path="/login" element={<Login />} />
+
+        <Route path="/pago-exitoso"   element={<PagoExitoso />} />
+        <Route path="/pago-fallido"   element={<PagoFallido />} />
+        <Route path="/pago-pendiente" element={<PagoFallido />} />
+
+        <Route path="/dashboard"      element={<ProtectedRoute allowedRoles={['admin','colaborador']}><Dashboard /></ProtectedRoute>} />
+        <Route path="/negocios"       element={<ProtectedRoute allowedRoles={['admin','colaborador']}><Negocios /></ProtectedRoute>} />
+        <Route path="/programas"      element={<ProtectedRoute allowedRoles={['admin','colaborador']}><Programas /></ProtectedRoute>} />
+        <Route path="/cursos"         element={<ProtectedRoute allowedRoles={['admin','colaborador']}><Cursos /></ProtectedRoute>} />
+        <Route path="/postulaciones"  element={<ProtectedRoute allowedRoles={['admin','colaborador']}><Postulaciones /></ProtectedRoute>} />
+        <Route path="/usuarios"       element={<ProtectedRoute allowedRoles={['admin','colaborador']}><Usuarios /></ProtectedRoute>} />
+        <Route path="/avisos"         element={<ProtectedRoute allowedRoles={['admin','colaborador']}><Avisos /></ProtectedRoute>} />
+        <Route path="/avisos/:id"     element={<ProtectedRoute allowedRoles={['admin','colaborador']}><AvisoDetalle /></ProtectedRoute>} />
+        <Route path="/enlaces"        element={<ProtectedRoute allowedRoles={['admin','colaborador']}><Enlaces /></ProtectedRoute>} />
+        <Route path="/contacto"       element={<ProtectedRoute allowedRoles={['admin','colaborador']}><Contacto /></ProtectedRoute>} />
+        <Route path="/jcf"            element={<ProtectedRoute allowedRoles={['admin','colaborador']}><JovenesConstruyendoFuturo /></ProtectedRoute>} />
+        
+        <Route path="/campanas"       element={<ProtectedRoute allowedRoles={['admin']}><CampanasAdmin /></ProtectedRoute>} />
+
+        <Route path="/cliente/dashboard"      element={<ProtectedRoute allowedRoles={['cliente']}><ClienteDashboard /></ProtectedRoute>} />
+        <Route path="/cliente/mis-negocios"   element={<ProtectedRoute allowedRoles={['cliente']}><MisNegocios /></ProtectedRoute>} />
+        <Route path="/cliente/programas"      element={<ProtectedRoute allowedRoles={['cliente']}><ProgramasDisponibles /></ProtectedRoute>} />
+        <Route path="/cliente/postulaciones"  element={<ProtectedRoute allowedRoles={['cliente']}><MisPostulaciones /></ProtectedRoute>} />
+        <Route path="/cliente/cursos"         element={<ProtectedRoute allowedRoles={['cliente']}><CursosDisponibles /></ProtectedRoute>} />
+        <Route path="/cliente/avisos"         element={<ProtectedRoute allowedRoles={['cliente']}><ClienteAvisos /></ProtectedRoute>} />
+        <Route path="/cliente/avisos/:id"     element={<ProtectedRoute allowedRoles={['cliente']}><AvisoDetalle /></ProtectedRoute>} />
+        <Route path="/cliente/recursos"       element={<ProtectedRoute allowedRoles={['cliente']}><ClienteRecursos /></ProtectedRoute>} />
+        <Route path="/cliente/contacto"       element={<ProtectedRoute allowedRoles={['cliente']}><ClienteContacto /></ProtectedRoute>} />
+
+        <Route path="/perfil"          element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
+        <Route path="/inversiones"     element={<ProtectedRoute><Inversiones /></ProtectedRoute>} />
+        <Route path="/mis-campanas"    element={<ProtectedRoute><MisCampanas /></ProtectedRoute>} />
+        <Route path="/mis-inversiones" element={<ProtectedRoute><MisInversiones /></ProtectedRoute>} />
+
+        <Route path="/"  element={<Navigate to="/login" replace />} />
+        <Route path="*"  element={<Navigate to="/login" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default App;

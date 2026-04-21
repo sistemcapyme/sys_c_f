@@ -1,0 +1,840 @@
+import { useState, useEffect, useMemo } from 'react';
+import { toast } from 'react-hot-toast';
+import {
+  Users, Plus, Search, Edit, CheckCircle, Trash2,
+  AlertCircle, X, FolderOpen, Link, UserCheck, MapPin,
+  Calendar, Phone, Mail, Building2, ExternalLink,
+  ChevronDown, SlidersHorizontal, User, AlertTriangle,
+  Tag, Clock, CreditCard
+} from 'lucide-react';
+import Layout from '../components/common/Layout';
+import { jcfService } from '../services/jcfService';
+
+const ESTATUS_OPCIONES = [
+  'Aceptado',
+  'Dado de baja',
+  'Egresado',
+  'En capacitación',
+  'Negocio',
+  'No se pudo vincular',
+  'Por registrar',
+  'Por vincular',
+  'Vinculado'
+];
+
+const initialFormData = {
+  nombre: '',
+  apellido: '',
+  correo: '',
+  telefono: '',
+  curp: '',
+  fechaInicio: '',
+  fechaTermino: '',
+  clienteId: '',
+  negocioId: '',
+  estatus: 'Por registrar',
+  tarjetaEntregada: false,
+  horarios: '',
+  horarioConfirmado: false,
+};
+
+const ConfirmModal = ({ config, onClose }) => {
+  if (!config?.show) return null;
+  const isDanger  = config.variant === 'danger';
+  const isWarning = config.variant === 'warning';
+
+  const accentBg     = isDanger ? '#FEF2F2' : isWarning ? '#FFFBEB' : '#EEF4FF';
+  const accentBorder = isDanger ? '#FECACA' : isWarning ? '#FDE68A' : 'var(--border)';
+  const iconBg       = isDanger ? '#EF4444' : isWarning ? '#F59E0B' : 'var(--capyme-blue-mid)';
+  const titleColor   = isDanger ? '#B91C1C' : isWarning ? '#92400E' : 'var(--gray-900)';
+  const subtitleColor= isDanger ? '#DC2626' : isWarning ? '#B45309' : 'var(--gray-500)';
+  const btnBg        = isDanger
+    ? 'linear-gradient(135deg,#EF4444,#DC2626)'
+    : isWarning
+      ? 'linear-gradient(135deg,#F59E0B,#D97706)'
+      : 'linear-gradient(135deg,var(--capyme-blue-mid),var(--capyme-blue))';
+  const btnShadow    = isDanger
+    ? '0 2px 8px rgba(239,68,68,0.35)'
+    : isWarning
+      ? '0 2px 8px rgba(245,158,11,0.35)'
+      : '0 2px 8px rgba(31,78,158,0.28)';
+
+  return (
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', backdropFilter:'blur(4px)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1200, padding:'20px' }}>
+      <div style={{ background:'#fff', borderRadius:'var(--radius-lg)', width:'100%', maxWidth:'440px', boxShadow:'0 24px 64px rgba(0,0,0,0.22)', overflow:'hidden', animation:'modalIn 0.22s ease both' }}>
+        <div style={{ background:accentBg, padding:'20px 24px', borderBottom:`1px solid ${accentBorder}`, display:'flex', alignItems:'center', gap:'14px' }}>
+          <div style={{ width:'44px', height:'44px', background:iconBg, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, boxShadow:`0 4px 12px ${iconBg}40` }}>
+            <AlertTriangle style={{ width:'22px', height:'22px', color:'#fff' }} />
+          </div>
+          <div>
+            <h3 style={{ fontSize:'17px', fontWeight:800, color:titleColor, fontFamily:"'Plus Jakarta Sans', sans-serif", margin:'0 0 2px' }}>{config.title}</h3>
+            <p style={{ fontSize:'13px', color:subtitleColor, margin:0, fontFamily:"'DM Sans', sans-serif", fontWeight:500 }}>{config.subtitle || 'Esta acción puede revertirse más adelante'}</p>
+          </div>
+        </div>
+        <div style={{ padding:'20px 24px' }}>
+          {config.message && (
+            <div style={{ background:'var(--gray-50)', border:'1px solid var(--border)', borderRadius:'var(--radius-md)', padding:'14px 16px', marginBottom:'20px' }}>
+              <p style={{ fontSize:'14px', color:'var(--gray-700)', margin:0, fontFamily:"'DM Sans', sans-serif", lineHeight:1.5 }}>{config.message}</p>
+            </div>
+          )}
+          <div style={{ display:'flex', gap:'10px', justifyContent:'flex-end' }}>
+            <button onClick={onClose} style={{ padding:'9px 18px', border:'1px solid var(--border)', borderRadius:'var(--radius-md)', background:'#fff', color:'var(--gray-700)', fontSize:'14px', fontWeight:600, fontFamily:"'DM Sans', sans-serif", cursor:'pointer', transition:'all 150ms ease' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-100)'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}>Cancelar</button>
+            <button onClick={() => { config.onConfirm(); onClose(); }} style={{ padding:'9px 22px', border:'none', borderRadius:'var(--radius-md)', background:btnBg, color:'#fff', fontSize:'14px', fontWeight:600, fontFamily:"'DM Sans', sans-serif", cursor:'pointer', boxShadow:btnShadow, transition:'all 150ms ease' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.9'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>{config.confirmLabel || 'Confirmar'}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const InfoRow = ({ label, value, icon: Icon, isLink }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+    <span style={{ fontSize: '12px', color: 'var(--gray-500)', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", display: 'flex', alignItems: 'center', gap: '5px' }}>
+      {Icon && <Icon style={{ width: '13px', height: '13px', color: 'var(--gray-400)' }} />}
+      {label}
+    </span>
+    {isLink && value ? (
+      <a href={value} target="_blank" rel="noopener noreferrer" style={{ fontSize: '14px', color: 'var(--capyme-blue-mid)', fontFamily: "'DM Sans', sans-serif", fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
+        Ver enlace <ExternalLink style={{ width: '12px', height: '12px' }} />
+      </a>
+    ) : (
+      <span style={{ fontSize: '14px', color: value ? 'var(--gray-900)' : 'var(--gray-400)', fontFamily: "'DM Sans', sans-serif", fontWeight: 500 }}>
+        {value || '—'}
+      </span>
+    )}
+  </div>
+);
+
+const JovenesConstruyendoFuturo = () => {
+  const authStorage = JSON.parse(localStorage.getItem('auth-storage') || '{}');
+  const currentUser = authStorage?.state?.user || {};
+
+  const [items, setItems] = useState([]);
+  const [clientes, setClientes] = useState([]);
+  const [negocios, setNegocios] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  
+  const [showModal, setShowModal] = useState(false);
+  const [modalMode, setModalMode] = useState('create');
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [detailsItem, setDetailsItem] = useState(null);
+  const [showRecursoModal, setShowRecursoModal] = useState(false);
+  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [formData, setFormData] = useState(initialFormData);
+  const [formErrors, setFormErrors] = useState({});
+  const [recursoItem, setRecursoItem] = useState(null);
+  const [recursoUrl, setRecursoUrl] = useState('');
+  const [submittingRecurso, setSubmittingRecurso] = useState(false);
+  const [hoveredRow, setHoveredRow] = useState(null);
+  
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterEstado, setFilterEstado] = useState('');
+  const [filterCliente, setFilterCliente] = useState('');
+  const [filterNegocio, setFilterNegocio] = useState('');
+  const [filterEstadoGeo, setFilterEstadoGeo] = useState('');
+  const [filterMunicipioNegocio, setFilterMunicipioNegocio] = useState('');
+  const [filterEstatus, setFilterEstatus] = useState('');
+
+  const [confirmConfig, setConfirmConfig] = useState({ show: false });
+  const showConfirm = (cfg) => setConfirmConfig({ show: true, ...cfg });
+  const closeConfirm = () => setConfirmConfig({ show: false });
+
+  const inputBaseStyle = {
+    width: '100%', padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)',
+    fontSize: '14px', fontFamily: "'DM Sans', sans-serif", color: 'var(--gray-900)', background: '#fff',
+    outline: 'none', transition: 'all 200ms ease', boxSizing: 'border-box',
+  };
+  const inputErrorStyle = { borderColor: '#EF4444', boxShadow: '0 0 0 2px rgba(239,68,68,0.15)' };
+  const labelStyle = { display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-600)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif" };
+  const selectStyle = { ...inputBaseStyle, appearance: 'none', paddingRight: '36px', cursor: 'pointer' };
+  const selectDisabledStyle = { ...inputBaseStyle, appearance: 'none', paddingRight: '36px', background: 'var(--gray-50)', color: 'var(--gray-400)', cursor: 'not-allowed' };
+  
+  useEffect(() => {
+    cargarDatos();
+    cargarClientes();
+    cargarNegocios();
+  }, []);
+
+  const cargarDatos = async () => {
+    try {
+      setLoading(true);
+      const res = await jcfService.getAll();
+      setItems(res.data || []);
+    } catch {
+      toast.error('Error al cargar los datos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cargarClientes = async () => { try { const res = await jcfService.getClientes(); setClientes(res.data || []); } catch {} };
+  const cargarNegocios = async () => { try { const res = await jcfService.getNegocios(); setNegocios(res.data || []); } catch {} };
+
+  const negociosFiltradosPorCliente = useMemo(() => {
+    if (!formData.clienteId) return [];
+    return negocios.filter(n => String(n.usuarioId) === String(formData.clienteId));
+  }, [formData.clienteId, negocios]);
+
+  const estadosGeoUnicos = useMemo(() => {
+    const set = new Set(items.map(i => i.negocio?.estado).filter(Boolean));
+    return [...set].sort();
+  }, [items]);
+
+  const municipiosNegocioUnicos = useMemo(() => {
+    const source = filterEstadoGeo ? items.filter(i => i.negocio?.estado === filterEstadoGeo) : items;
+    const set = new Set(source.map(i => i.negocio?.ciudad).filter(Boolean));
+    return [...set].sort();
+  }, [items, filterEstadoGeo]);
+
+  const clientesFiltro = useMemo(() => {
+    const map = new Map();
+    items.forEach(item => {
+      if (item.negocio?.usuario && !map.has(item.negocio.usuario.id)) {
+        map.set(item.negocio.usuario.id, item.negocio.usuario);
+      }
+    });
+    return [...map.values()].sort((a, b) => `${a.nombre} ${a.apellido}`.localeCompare(`${b.nombre} ${b.apellido}`));
+  }, [items]);
+
+  const activeFiltersCount = [filterEstado, filterCliente, filterNegocio, filterEstadoGeo, filterMunicipioNegocio, filterEstatus].filter(Boolean).length;
+
+  const clearFilters = () => {
+    setFilterEstado(''); setFilterCliente(''); setFilterNegocio(''); setFilterEstadoGeo(''); setFilterMunicipioNegocio(''); setFilterEstatus('');
+  };
+
+  const filtered = useMemo(() => {
+    return items.filter(item => {
+      const term = searchTerm.toLowerCase();
+      const matchSearch = (
+        item.nombre?.toLowerCase().includes(term) ||
+        item.apellido?.toLowerCase().includes(term) ||
+        item.curp?.toLowerCase().includes(term) ||
+        item.correo?.toLowerCase().includes(term) ||
+        item.estatus?.toLowerCase().includes(term) ||
+        item.negocio?.ciudad?.toLowerCase().includes(term) ||
+        item.negocio?.estado?.toLowerCase().includes(term) ||
+        item.negocio?.nombreNegocio?.toLowerCase().includes(term) ||
+        `${item.negocio?.usuario?.nombre} ${item.negocio?.usuario?.apellido}`.toLowerCase().includes(term)
+      );
+      const matchEstado = !filterEstado || (filterEstado === 'activo' ? item.activo : !item.activo);
+      const matchCliente = !filterCliente || String(item.negocio?.usuarioId) === String(filterCliente);
+      const matchNegocio = !filterNegocio || String(item.negocioId) === String(filterNegocio);
+      const matchEstadoGeo = !filterEstadoGeo || item.negocio?.estado === filterEstadoGeo;
+      const matchMunicipioNegocio = !filterMunicipioNegocio || item.negocio?.ciudad === filterMunicipioNegocio;
+      const matchEstatus = !filterEstatus || item.estatus === filterEstatus;
+      return matchSearch && matchEstado && matchCliente && matchNegocio && matchEstadoGeo && matchMunicipioNegocio && matchEstatus;
+    });
+  }, [items, searchTerm, filterEstado, filterCliente, filterNegocio, filterEstadoGeo, filterMunicipioNegocio, filterEstatus]);
+
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.clienteId) errors.clienteId = 'Selecciona un cliente';
+    if (!formData.negocioId) errors.negocioId = 'Selecciona un negocio';
+    if (!formData.nombre.trim()) errors.nombre = 'El nombre es requerido';
+    if (!formData.apellido.trim()) errors.apellido = 'El apellido es requerido';
+    if (formData.correo && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.correo)) errors.correo = 'El correo no es válido';
+    if (formData.curp && formData.curp.length !== 18) errors.curp = 'La CURP debe tener exactamente 18 caracteres';
+    if (formData.telefono && !/^\d{10}$/.test(formData.telefono.replace(/\s/g, ''))) errors.telefono = 'El teléfono debe tener 10 dígitos';
+    if (formData.estatus === 'Vinculado' && formData.fechaInicio && formData.fechaTermino && formData.fechaInicio > formData.fechaTermino) errors.fechaTermino = 'La fecha de término debe ser posterior a la de inicio';
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const isFormValid = formData.clienteId !== '' && formData.negocioId !== '' && formData.nombre.trim() !== '' && formData.apellido.trim() !== '' &&
+                      (!formData.correo || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.correo)) &&
+                      (!formData.curp || formData.curp.length === 18) &&
+                      (!formData.telefono || /^\d{10}$/.test(formData.telefono.replace(/\s/g, ''))) &&
+                      (!(formData.estatus === 'Vinculado' && formData.fechaInicio && formData.fechaTermino) || formData.fechaInicio <= formData.fechaTermino);
+
+  const handleOpenModal = (mode, item = null) => {
+    setModalMode(mode);
+    setSelectedItem(item);
+    setFormErrors({});
+    if (mode === 'edit' && item) {
+      const clienteId = item.negocio?.usuarioId ? String(item.negocio.usuarioId) : '';
+      setFormData({
+        nombre: item.nombre || '', 
+        apellido: item.apellido || '', 
+        correo: item.correo || '', 
+        telefono: item.telefono || '',
+        curp: item.curp || '', 
+        fechaInicio: item.fechaInicio ? item.fechaInicio.split('T')[0] : '', 
+        fechaTermino: item.fechaTermino ? item.fechaTermino.split('T')[0] : '',
+        clienteId, 
+        negocioId: item.negocioId ? String(item.negocioId) : '', 
+        estatus: item.estatus || 'Por registrar',
+        tarjetaEntregada: item.tarjetaEntregada || false,
+        horarios: item.horarios || '',
+        horarioConfirmado: item.horarioConfirmado || false,
+      });
+    } else {
+      setFormData(initialFormData);
+    }
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => { setShowModal(false); setSelectedItem(null); setFormData(initialFormData); setFormErrors({}); };
+  const handleOpenDetails = (item) => { setDetailsItem(item); setShowDetailsModal(true); };
+  const handleCloseDetails = () => { setShowDetailsModal(false); setDetailsItem(null); };
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    const val = type === 'checkbox' ? checked : value;
+    
+    if (name === 'clienteId') {
+      setFormData(prev => ({ ...prev, clienteId: val, negocioId: '' }));
+      if (formErrors.clienteId) setFormErrors(prev => ({ ...prev, clienteId: '' }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: val }));
+      if (formErrors[name]) setFormErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+    setSubmitting(true);
+    try {
+      const { clienteId, ...rest } = formData;
+      const payload = { ...rest };
+      payload.negocioId = parseInt(payload.negocioId);
+      if (!payload.correo) delete payload.correo;
+      if (!payload.telefono) delete payload.telefono;
+      if (!payload.curp) delete payload.curp;
+      
+      if (payload.estatus !== 'Vinculado') {
+        delete payload.fechaInicio;
+        delete payload.fechaTermino;
+        payload.tarjetaEntregada = false;
+        payload.horarios = null;
+        payload.horarioConfirmado = false;
+      } else {
+        if (!payload.fechaInicio) delete payload.fechaInicio;
+        if (!payload.fechaTermino) delete payload.fechaTermino;
+        payload.tarjetaEntregada = Boolean(payload.tarjetaEntregada);
+        payload.horarioConfirmado = Boolean(payload.horarioConfirmado);
+      }
+
+      if (modalMode === 'create') {
+        await jcfService.create(payload);
+        toast.success('Beneficiario registrado exitosamente');
+      } else {
+        await jcfService.update(selectedItem.id, payload);
+        toast.success('Registro actualizado exitosamente');
+      }
+      handleCloseModal();
+      cargarDatos();
+    } catch (error) {
+      toast.error(error?.response?.data?.message || 'Error al guardar');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleToggleActivo = (item) => {
+    if (currentUser.rol !== 'admin') return;
+    const desactivar = item.activo;
+    showConfirm({
+      variant: desactivar ? 'danger' : 'warning',
+      title: desactivar ? 'Desactivar beneficiario' : 'Activar beneficiario',
+      subtitle: desactivar ? 'El beneficiario dejará de estar activo' : 'El beneficiario volverá a estar activo',
+      message: `¿Confirmas que deseas ${desactivar ? 'desactivar' : 'activar'} a "${item.nombre} ${item.apellido}"?`,
+      confirmLabel: desactivar ? 'Sí, desactivar' : 'Sí, activar',
+      onConfirm: async () => {
+        try {
+          await jcfService.toggleActivo(item.id);
+          toast.success(`Beneficiario ${desactivar ? 'desactivado' : 'activado'} exitosamente`);
+          cargarDatos();
+          if (detailsItem && detailsItem.id === item.id) {
+             setDetailsItem(prev => ({ ...prev, activo: !desactivar }));
+          }
+        } catch {
+          toast.error('Error al cambiar estado');
+        }
+      },
+    });
+  };
+
+  const handleOpenRecurso = (item) => { setRecursoItem(item); setRecursoUrl(item.urlRecurso || ''); setShowRecursoModal(true); };
+  const handleCloseRecurso = () => { setShowRecursoModal(false); setRecursoItem(null); setRecursoUrl(''); };
+
+  const handleGuardarRecurso = async () => {
+    setSubmittingRecurso(true);
+    try {
+      await jcfService.updateRecurso(recursoItem.id, { urlRecurso: recursoUrl });
+      toast.success('Recurso actualizado exitosamente');
+      handleCloseRecurso();
+      cargarDatos();
+    } catch {
+      toast.error('Error al actualizar recurso');
+    } finally {
+      setSubmittingRecurso(false);
+    }
+  };
+
+  const getInitials = (nombre, apellido) => `${(nombre || '')[0] || ''}${(apellido || '')[0] || ''}`.toUpperCase();
+  const formatFecha = (dateStr) => {
+    if (!dateStr) return '—';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
+  };
+
+  const getEstatusColor = (estatus) => {
+    switch(estatus) {
+      case 'Aceptado': return { bg: '#ECFDF5', text: '#065F46' };
+      case 'Vinculado': return { bg: '#E0F2FE', text: '#0369A1' };
+      case 'En capacitación': return { bg: '#EFF6FF', text: '#1D4ED8' };
+      case 'Negocio': return { bg: '#F5F3FF', text: '#6D28D9' };
+      case 'Egresado': return { bg: '#F0FDF4', text: '#15803D' };
+      case 'Dado de baja': return { bg: '#FEF2F2', text: '#DC2626' };
+      case 'No se pudo vincular': return { bg: '#FFF1F2', text: '#BE123C' };
+      case 'Por registrar': return { bg: '#FFFBEB', text: '#B45309' };
+      case 'Por vincular': return { bg: '#F8FAFC', text: '#475569' };
+      default: return { bg: '#F3F4F6', text: '#374151' };
+    }
+  };
+
+  const DropArrow = () => (
+    <svg style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', width: '14px', height: '14px', color: 'var(--gray-400)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    </svg>
+  );
+
+  const SmallDropArrow = () => (
+    <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', width: '12px', height: '12px', color: 'var(--gray-400)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    </svg>
+  );
+
+  if (loading) {
+    return (
+      <Layout>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '50%', border: '3px solid var(--gray-200)', borderTopColor: 'var(--capyme-blue-mid)', animation: 'spin 0.8s linear infinite' }} />
+        </div>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.96) translateY(12px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        @keyframes filtersIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+      `}</style>
+
+      <div style={{ padding: '28px 32px', animation: 'fadeIn 250ms ease' }}>
+
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '28px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: 'var(--radius-md)', background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(31,78,158,0.25)' }}>
+              <UserCheck style={{ width: '24px', height: '24px', color: '#fff' }} />
+            </div>
+            <div>
+              <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 800, fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--gray-900)', lineHeight: 1.2 }}>
+                Jóvenes Construyendo el Futuro
+              </h1>
+              <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif" }}>
+                {filtered.length} {filtered.length === 1 ? 'beneficiario' : 'beneficiarios'}
+                {items.length !== filtered.length && ` de ${items.length}`}
+              </p>
+            </div>
+          </div>
+
+          {currentUser.rol !== 'cliente' && (
+            <button
+              onClick={() => handleOpenModal('create')}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', border: 'none', borderRadius: 'var(--radius-md)', background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', color: '#fff', fontSize: '14px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", cursor: 'pointer', transition: 'all 200ms ease', boxShadow: '0 2px 8px rgba(31,78,158,0.28)' }}
+              onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)'; }}
+            >
+              <Plus style={{ width: '16px', height: '16px' }} /> Nuevo Beneficiario
+            </button>
+          )}
+        </div>
+
+        <div style={{ background: '#fff', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', padding: '16px 20px', marginBottom: '20px', boxShadow: 'var(--shadow-sm)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <div style={{ position: 'relative', flex: 1, minWidth: '260px', maxWidth: '420px' }}>
+              <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: 'var(--gray-400)', pointerEvents: 'none' }} />
+              <input type="text" placeholder="Buscar por nombre, CURP, estatus, cliente..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ ...inputBaseStyle, paddingLeft: '38px' }} />
+            </div>
+
+            <button onClick={() => setShowFilters(v => !v)} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '10px 16px', border: '1px solid', borderColor: showFilters || activeFiltersCount > 0 ? '#BFDBFE' : 'var(--border)', borderRadius: 'var(--radius-md)', background: showFilters || activeFiltersCount > 0 ? '#EEF4FF' : '#fff', color: showFilters || activeFiltersCount > 0 ? 'var(--capyme-blue-mid)' : 'var(--gray-600)', fontSize: '13px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", cursor: 'pointer', transition: 'all 150ms ease', whiteSpace: 'nowrap' }}>
+              <SlidersHorizontal style={{ width: '15px', height: '15px' }} /> Filtros
+              {activeFiltersCount > 0 && <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '18px', height: '18px', borderRadius: '50%', background: 'var(--capyme-blue-mid)', color: '#fff', fontSize: '10px', fontWeight: 700 }}>{activeFiltersCount}</span>}
+              <ChevronDown style={{ width: '13px', height: '13px', transform: showFilters ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 200ms ease' }} />
+            </button>
+            {activeFiltersCount > 0 && <button onClick={clearFilters} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '10px 14px', border: '1px solid #FEE2E2', borderRadius: 'var(--radius-md)', background: '#FEF2F2', color: '#DC2626', fontSize: '13px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", cursor: 'pointer', transition: 'all 150ms ease', whiteSpace: 'nowrap' }}><X style={{ width: '13px', height: '13px' }} /> Limpiar</button>}
+          </div>
+
+          {showFilters && (
+            <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px', animation: 'filtersIn 200ms ease' }}>
+              <div>
+                <label style={{ ...labelStyle, fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <Tag style={{ width: '11px', height: '11px' }} /> Estatus de Vinculación
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <select value={filterEstatus} onChange={e => setFilterEstatus(e.target.value)} style={{ ...selectStyle, fontSize: '13px', padding: '8px 30px 8px 10px' }}>
+                    <option value="">Todos los estatus</option>
+                    {ESTATUS_OPCIONES.map(est => <option key={est} value={est}>{est}</option>)}
+                  </select>
+                  <SmallDropArrow />
+                </div>
+              </div>
+              <div>
+                <label style={{ ...labelStyle, fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <User style={{ width: '11px', height: '11px' }} /> Cliente
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <select value={filterCliente} onChange={e => { setFilterCliente(e.target.value); setFilterNegocio(''); }} style={{ ...selectStyle, fontSize: '13px', padding: '8px 30px 8px 10px' }}>
+                    <option value="">Todos los clientes</option>
+                    {clientesFiltro.map(c => <option key={c.id} value={c.id}>{c.nombre} {c.apellido}</option>)}
+                  </select>
+                  <SmallDropArrow />
+                </div>
+              </div>
+              <div>
+                <label style={{ ...labelStyle, fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <MapPin style={{ width: '11px', height: '11px' }} /> Estado del negocio
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <select value={filterEstadoGeo} onChange={e => { setFilterEstadoGeo(e.target.value); setFilterMunicipioNegocio(''); }} style={{ ...selectStyle, fontSize: '13px', padding: '8px 30px 8px 10px' }}>
+                    <option value="">Todos los estados</option>
+                    {estadosGeoUnicos.map(e => <option key={e} value={e}>{e}</option>)}
+                  </select>
+                  <SmallDropArrow />
+                </div>
+              </div>
+              <div>
+                <label style={{ ...labelStyle, fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <MapPin style={{ width: '11px', height: '11px' }} /> Ciudad del negocio
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <select value={filterMunicipioNegocio} onChange={e => setFilterMunicipioNegocio(e.target.value)} style={{ ...selectStyle, fontSize: '13px', padding: '8px 30px 8px 10px' }}>
+                    <option value="">Todas las ciudades</option>
+                    {municipiosNegocioUnicos.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                  <SmallDropArrow />
+                </div>
+              </div>
+              <div>
+                <label style={{ ...labelStyle, fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <UserCheck style={{ width: '11px', height: '11px' }} /> Sistema
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <select value={filterEstado} onChange={e => setFilterEstado(e.target.value)} style={{ ...selectStyle, fontSize: '13px', padding: '8px 30px 8px 10px' }}>
+                    <option value="">Todos</option>
+                    <option value="activo">Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                  </select>
+                  <SmallDropArrow />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div style={{ background: '#fff', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
+              <thead>
+                <tr style={{ background: 'var(--gray-50)' }}>
+                  {[ 'Beneficiario', 'Negocio Asignado', 'Estatus', 'Acciones' ].map((col, i) => (
+                    <th key={i} style={{ padding: '13px 20px', textAlign: i === 3 ? 'right' : i === 2 ? 'center' : 'left', fontSize: '11px', fontWeight: 700, color: 'var(--gray-500)', fontFamily: "'Plus Jakarta Sans', sans-serif", textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>
+                      {col}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} style={{ padding: '60px 16px', textAlign: 'center', color: 'var(--gray-400)', fontFamily: "'DM Sans', sans-serif", fontSize: '14px' }}>
+                      <Users style={{ width: '40px', height: '40px', margin: '0 auto 12px', display: 'block', opacity: 0.3 }} />
+                      No se encontraron beneficiarios
+                    </td>
+                  </tr>
+                ) : filtered.map(item => (
+                  <tr key={item.id} onClick={() => handleOpenDetails(item)} onMouseEnter={() => setHoveredRow(item.id)} onMouseLeave={() => setHoveredRow(null)} style={{ background: hoveredRow === item.id ? 'var(--gray-50)' : '#fff', transition: 'background 150ms ease', borderBottom: '1px solid var(--border)', cursor: 'pointer' }}>
+                    <td style={{ padding: '13px 20px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '38px', height: '38px', borderRadius: 'var(--radius-md)', background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '12px', fontWeight: 700, color: '#fff', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                          {getInitials(item.nombre, item.apellido)}
+                        </div>
+                        <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--gray-900)', fontFamily: "'DM Sans', sans-serif" }}>{item.nombre} {item.apellido}</div>
+                      </div>
+                    </td>
+                    <td style={{ padding: '13px 20px' }}>
+                      {item.negocio ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <span style={{ fontSize: '13px', color: 'var(--gray-800)', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <Building2 style={{ width: '12px', height: '12px', color: 'var(--capyme-blue-mid)' }} />{item.negocio.nombreNegocio}
+                          </span>
+                          <span style={{ fontSize: '11px', color: 'var(--gray-400)', fontFamily: "'DM Sans', sans-serif" }}>Cliente: {item.negocio.usuario?.nombre}</span>
+                        </div>
+                      ) : <span style={{ color: 'var(--gray-300)', fontSize: '13px' }}>—</span>}
+                    </td>
+                    <td style={{ padding: '13px 20px', textAlign: 'center' }}>
+                      <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: 'var(--radius-sm)', fontSize: '11px', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", background: getEstatusColor(item.estatus || 'Por registrar').bg, color: getEstatusColor(item.estatus || 'Por registrar').text }}>
+                        {item.estatus || 'Por registrar'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '13px 20px', textAlign: 'right' }} onClick={e => e.stopPropagation()}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
+                        {currentUser.rol !== 'cliente' && (
+                          <>
+                            <button onClick={() => handleOpenRecurso(item)} title={item.urlRecurso ? 'Editar recurso' : 'Agregar recurso'} style={{ width: '34px', height: '34px', border: 'none', borderRadius: 'var(--radius-sm)', background: 'transparent', cursor: 'pointer', transition: 'all 150ms ease', color: item.urlRecurso ? '#059669' : 'var(--gray-400)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => { e.currentTarget.style.background = item.urlRecurso ? '#ECFDF5' : '#EEF4FF'; e.currentTarget.style.color = item.urlRecurso ? '#047857' : 'var(--capyme-blue-mid)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = item.urlRecurso ? '#059669' : 'var(--gray-400)'; }}>
+                              <FolderOpen style={{ width: '16px', height: '16px' }} />
+                            </button>
+
+                            <button onClick={() => handleOpenModal('edit', item)} title="Editar" style={{ width: '34px', height: '34px', border: 'none', borderRadius: 'var(--radius-sm)', background: 'transparent', cursor: 'pointer', color: 'var(--gray-400)', transition: 'all 150ms ease', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => { e.currentTarget.style.background = '#EEF4FF'; e.currentTarget.style.color = 'var(--capyme-blue-mid)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-400)'; }}>
+                              <Edit style={{ width: '16px', height: '16px' }} />
+                            </button>
+
+                            {currentUser.rol === 'admin' ? (
+                              <button onClick={() => handleToggleActivo(item)} title={item.activo ? 'Desactivar' : 'Activar'} style={{ width: '34px', height: '34px', border: 'none', borderRadius: 'var(--radius-sm)', background: 'transparent', cursor: 'pointer', color: 'var(--gray-400)', transition: 'all 150ms ease', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} onMouseEnter={e => { e.currentTarget.style.background = item.activo ? '#FEF2F2' : '#ECFDF5'; e.currentTarget.style.color = item.activo ? '#DC2626' : '#065F46'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-400)'; }}>
+                                {item.activo ? <Trash2 style={{ width: '16px', height: '16px' }} /> : <CheckCircle style={{ width: '16px', height: '16px' }} />}
+                              </button>
+                            ) : (
+                              <div style={{ width: '34px', height: '34px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gray-300)', cursor: 'not-allowed' }}>
+                                {item.activo ? <Trash2 style={{ width: '16px', height: '16px' }} /> : <CheckCircle style={{ width: '16px', height: '16px' }} />}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {showModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: '720px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.18)', animation: 'modalIn 200ms ease' }}>
+            <div style={{ padding: '20px 24px', background: 'var(--gray-50)', borderBottom: '1px solid var(--border)', borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <UserCheck style={{ width: '20px', height: '20px', color: 'var(--capyme-blue-mid)' }} />
+                <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--gray-900)' }}>{modalMode === 'create' ? 'Nuevo Beneficiario JCF' : 'Editar Beneficiario'}</h2>
+              </div>
+              <button onClick={handleCloseModal} style={{ width: '34px', height: '34px', border: 'none', background: 'transparent', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--gray-400)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-100)'; e.currentTarget.style.color = 'var(--gray-700)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-400)'; }}><X style={{ width: '18px', height: '18px' }} /></button>
+            </div>
+
+            <div style={{ overflowY: 'auto', flex: 1, padding: '24px' }}>
+              <SectionTitle icon={Building2} text="Asignación al programa" />
+              <div style={{ marginTop: '14px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+                <div>
+                  <label style={labelStyle}>Cliente <span style={{ color: '#EF4444' }}>*</span></label>
+                  <div style={{ position: 'relative' }}>
+                    <select name="clienteId" value={formData.clienteId} onChange={handleChange} style={{ ...selectStyle, ...(formErrors.clienteId ? inputErrorStyle : {}) }}>
+                      <option value="">— Seleccionar cliente —</option>
+                      {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre} {c.apellido}</option>)}
+                    </select>
+                    <DropArrow />
+                  </div>
+                  {formErrors.clienteId && <ErrorMsg text={formErrors.clienteId} />}
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Negocio <span style={{ color: '#EF4444' }}>*</span>{!formData.clienteId && <span style={{ fontWeight: 400, color: 'var(--gray-400)', marginLeft: '6px', fontSize: '11px' }}>— selecciona un cliente primero</span>}</label>
+                  <div style={{ position: 'relative' }}>
+                    <select name="negocioId" value={formData.negocioId} onChange={handleChange} disabled={!formData.clienteId} style={{ ...(formData.clienteId ? selectStyle : selectDisabledStyle), ...(formErrors.negocioId ? inputErrorStyle : {}) }}>
+                      <option value="">— Seleccionar negocio —</option>
+                      {negociosFiltradosPorCliente.map(n => <option key={n.id} value={n.id}>{n.nombreNegocio}</option>)}
+                    </select>
+                    <DropArrow />
+                  </div>
+                  {formErrors.negocioId && <ErrorMsg text={formErrors.negocioId} />}
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Estatus de Vinculación</label>
+                  <div style={{ position: 'relative' }}>
+                    <select name="estatus" value={formData.estatus} onChange={handleChange} style={selectStyle}>
+                      {ESTATUS_OPCIONES.map(est => <option key={est} value={est}>{est}</option>)}
+                    </select>
+                    <DropArrow />
+                  </div>
+                </div>
+
+                {formData.estatus === 'Vinculado' ? (
+                  <>
+                    <div><label style={labelStyle}>Fecha de inicio</label><input name="fechaInicio" value={formData.fechaInicio} onChange={handleChange} type="date" style={{ ...inputBaseStyle, ...(formErrors.fechaInicio ? inputErrorStyle : {}) }} /></div>
+                    <div><label style={labelStyle}>Fecha de término</label><input name="fechaTermino" value={formData.fechaTermino} onChange={handleChange} type="date" style={{ ...inputBaseStyle, ...(formErrors.fechaTermino ? inputErrorStyle : {}) }} /></div>
+                    <div><label style={labelStyle}>Horarios asignados</label><input name="horarios" value={formData.horarios} onChange={handleChange} placeholder="Ej. Lunes a Viernes 9am - 2pm" style={inputBaseStyle} /></div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+                      <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0, fontWeight: 500 }}>
+                        <input type="checkbox" name="tarjetaEntregada" checked={formData.tarjetaEntregada} onChange={handleChange} style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
+                        Tarjeta entregada
+                      </label>
+                      <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', margin: 0, fontWeight: 500 }}>
+                        <input type="checkbox" name="horarioConfirmado" checked={formData.horarioConfirmado} onChange={handleChange} style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
+                        Horario confirmado
+                      </label>
+                    </div>
+                  </>
+                ) : (
+                  <div></div>
+                )}
+              </div>
+
+              <SectionTitle icon={Users} text="Datos personales del beneficiario" />
+              <div style={{ marginTop: '14px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+                <div><label style={labelStyle}>Nombre <span style={{ color: '#EF4444' }}>*</span></label><input name="nombre" value={formData.nombre} onChange={handleChange} placeholder="Nombre(s)" style={{ ...inputBaseStyle, ...(formErrors.nombre ? inputErrorStyle : {}) }} />{formErrors.nombre && <ErrorMsg text={formErrors.nombre} />}</div>
+                <div><label style={labelStyle}>Apellidos <span style={{ color: '#EF4444' }}>*</span></label><input name="apellido" value={formData.apellido} onChange={handleChange} placeholder="Apellido paterno y materno" style={{ ...inputBaseStyle, ...(formErrors.apellido ? inputErrorStyle : {}) }} />{formErrors.apellido && <ErrorMsg text={formErrors.apellido} />}</div>
+                <div><label style={labelStyle}>CURP</label><input name="curp" value={formData.curp} onChange={e => handleChange({ target: { name: 'curp', value: e.target.value.toUpperCase() }, type: e.target.type })} placeholder="18 caracteres" maxLength={18} style={{ ...inputBaseStyle, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.05em', ...(formErrors.curp ? inputErrorStyle : {}) }} />{formErrors.curp && <ErrorMsg text={formErrors.curp} />}</div>
+              </div>
+
+              <SectionTitle icon={Phone} text="Contacto" />
+              <div style={{ marginTop: '14px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '8px' }}>
+                <div><label style={labelStyle}>Correo electrónico</label><input name="correo" value={formData.correo} onChange={handleChange} type="email" placeholder="correo@ejemplo.com" style={{ ...inputBaseStyle, ...(formErrors.correo ? inputErrorStyle : {}) }} />{formErrors.correo && <ErrorMsg text={formErrors.correo} />}</div>
+                <div><label style={labelStyle}>Teléfono</label><input name="telefono" value={formData.telefono} onChange={handleChange} placeholder="10 dígitos" maxLength={10} style={{ ...inputBaseStyle, ...(formErrors.telefono ? inputErrorStyle : {}) }} />{formErrors.telefono && <ErrorMsg text={formErrors.telefono} />}</div>
+              </div>
+            </div>
+
+            <div style={{ padding: '16px 24px', background: 'var(--gray-50)', borderTop: '1px solid var(--border)', borderRadius: '0 0 var(--radius-lg) var(--radius-lg)', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button onClick={handleCloseModal} style={{ padding: '9px 20px', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', background: '#fff', color: 'var(--gray-700)', fontSize: '14px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", cursor: 'pointer', transition: 'all 150ms ease' }}>Cancelar</button>
+              <button onClick={handleSubmit} disabled={submitting || Object.keys(formErrors).length > 0 || !isFormValid} style={{ padding: '9px 24px', border: 'none', borderRadius: 'var(--radius-md)', background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', color: '#fff', fontSize: '14px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", cursor: submitting || Object.keys(formErrors).length > 0 || !isFormValid ? 'not-allowed' : 'pointer', opacity: submitting || Object.keys(formErrors).length > 0 || !isFormValid ? 0.6 : 1, boxShadow: submitting || Object.keys(formErrors).length > 0 || !isFormValid ? 'none' : '0 2px 8px rgba(31,78,158,0.28)' }}>{submitting ? 'Guardando...' : modalMode === 'create' ? 'Registrar' : 'Guardar cambios'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDetailsModal && detailsItem && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: '640px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.18)', animation: 'modalIn 200ms ease' }}>
+            <div style={{ padding: '20px 24px', background: 'var(--gray-50)', borderBottom: '1px solid var(--border)', borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ width: '42px', height: '42px', borderRadius: 'var(--radius-md)', background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '15px', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                  {getInitials(detailsItem.nombre, detailsItem.apellido)}
+                </div>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--gray-900)' }}>
+                    {detailsItem.nombre} {detailsItem.apellido}
+                  </h2>
+                  <p style={{ margin: 0, fontSize: '13px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif" }}>Detalles completos del beneficiario JCF</p>
+                </div>
+              </div>
+              <button onClick={handleCloseDetails} style={{ width: '34px', height: '34px', border: 'none', background: 'transparent', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--gray-400)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-100)'; e.currentTarget.style.color = 'var(--gray-700)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-400)'; }}><X style={{ width: '18px', height: '18px' }} /></button>
+            </div>
+
+            <div style={{ overflowY: 'auto', flex: 1, padding: '24px', display: 'flex', flexDirection: 'column', gap: '28px' }}>
+              
+              <div>
+                <SectionTitle icon={Users} text="Información Personal" />
+                <div style={{ marginTop: '12px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
+                  <InfoRow label="CURP" value={detailsItem.curp} />
+                  <InfoRow label="Correo Electrónico" value={detailsItem.correo} icon={Mail} />
+                  <InfoRow label="Teléfono" value={detailsItem.telefono} icon={Phone} />
+                </div>
+              </div>
+
+              <div>
+                <SectionTitle icon={Building2} text="Asignación y Ubicación" />
+                <div style={{ marginTop: '12px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
+                  <InfoRow label="Negocio Asignado" value={detailsItem.negocio?.nombreNegocio} icon={Building2} />
+                  <InfoRow label="Cliente / Propietario" value={detailsItem.negocio?.usuario ? `${detailsItem.negocio.usuario.nombre} ${detailsItem.negocio.usuario.apellido}` : null} icon={User} />
+                  <InfoRow label="Ubicación del Negocio" value={(detailsItem.negocio?.ciudad || detailsItem.negocio?.estado) ? [detailsItem.negocio?.ciudad, detailsItem.negocio?.estado].filter(Boolean).join(', ') : null} icon={MapPin} />
+                </div>
+              </div>
+
+              <div>
+                <SectionTitle icon={Tag} text="Programa Jóvenes Construyendo el Futuro" />
+                <div style={{ marginTop: '12px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
+                  <div>
+                    <span style={{ fontSize: '12px', color: 'var(--gray-500)', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", display: 'block', marginBottom: '4px' }}>Estatus de Vinculación</span>
+                    <span style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: 'var(--radius-sm)', fontSize: '12px', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", background: getEstatusColor(detailsItem.estatus || 'Por registrar').bg, color: getEstatusColor(detailsItem.estatus || 'Por registrar').text }}>
+                      {detailsItem.estatus || 'Por registrar'}
+                    </span>
+                  </div>
+                  
+                  {detailsItem.estatus === 'Vinculado' && (
+                    <>
+                      <InfoRow label="Periodo de Capacitación" value={(detailsItem.fechaInicio || detailsItem.fechaTermino) ? `${formatFecha(detailsItem.fechaInicio)} — ${formatFecha(detailsItem.fechaTermino)}` : null} icon={Calendar} />
+                      <InfoRow label="Horarios" value={detailsItem.horarios} icon={Clock} />
+                      <InfoRow label="Tarjeta Entregada" value={detailsItem.tarjetaEntregada ? 'Sí' : 'No'} icon={CreditCard} />
+                      <InfoRow label="Horario Confirmado" value={detailsItem.horarioConfirmado ? 'Sí' : 'No'} icon={CheckCircle} />
+                    </>
+                  )}
+
+                  <div>
+                    <span style={{ fontSize: '12px', color: 'var(--gray-500)', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", display: 'block', marginBottom: '4px' }}>Estado en Sistema</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', borderRadius: 'var(--radius-sm)', fontSize: '12px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", background: detailsItem.activo ? '#ECFDF5' : '#FEF2F2', color: detailsItem.activo ? '#065F46' : '#DC2626' }}>
+                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: detailsItem.activo ? '#10B981' : '#EF4444', display: 'inline-block' }} />{detailsItem.activo ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </div>
+
+                  <InfoRow label="Recurso / Drive" value={detailsItem.urlRecurso} isLink={true} icon={Link} />
+                </div>
+              </div>
+
+            </div>
+
+            <div style={{ padding: '16px 24px', background: 'var(--gray-50)', borderTop: '1px solid var(--border)', borderRadius: '0 0 var(--radius-lg) var(--radius-lg)', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button onClick={handleCloseDetails} style={{ padding: '9px 20px', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', background: '#fff', color: 'var(--gray-700)', fontSize: '14px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", cursor: 'pointer', transition: 'all 150ms ease' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-100)'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}>Cerrar Detalles</button>
+              
+              {currentUser.rol !== 'cliente' && (
+                <>
+                  <button onClick={() => { handleCloseDetails(); handleOpenModal('edit', detailsItem); }} style={{ padding: '9px 24px', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', background: '#EEF4FF', color: 'var(--capyme-blue-mid)', fontSize: '14px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", cursor: 'pointer', transition: 'all 150ms ease' }}>Editar Registro</button>
+                  {currentUser.rol === 'admin' && (
+                    <button onClick={() => handleToggleActivo(detailsItem)} style={{ padding: '9px 24px', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', background: detailsItem.activo ? '#FEF2F2' : '#ECFDF5', color: detailsItem.activo ? '#DC2626' : '#065F46', fontSize: '14px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", cursor: 'pointer', transition: 'all 150ms ease' }}>
+                      {detailsItem.activo ? 'Desactivar' : 'Activar'}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showRecursoModal && recursoItem && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1001, padding: '20px' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: '480px', boxShadow: '0 20px 60px rgba(0,0,0,0.18)', animation: 'modalIn 200ms ease' }}>
+            <div style={{ padding: '18px 22px', background: 'var(--gray-50)', borderBottom: '1px solid var(--border)', borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><FolderOpen style={{ width: '18px', height: '18px', color: 'var(--capyme-blue-mid)' }} /><div><h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--gray-900)' }}>Recurso del beneficiario</h3><p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif" }}>{recursoItem.nombre} {recursoItem.apellido}</p></div></div>
+              <button onClick={handleCloseRecurso} style={{ width: '32px', height: '32px', border: 'none', background: 'transparent', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--gray-400)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 150ms ease' }}><X style={{ width: '16px', height: '16px' }} /></button>
+            </div>
+            <div style={{ padding: '22px' }}>
+              <label style={labelStyle}>URL del recurso (Drive / Video / Documento)</label>
+              <div style={{ position: 'relative' }}>
+                <Link style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '15px', height: '15px', color: 'var(--gray-400)', pointerEvents: 'none' }} />
+                <input type="url" value={recursoUrl} onChange={e => setRecursoUrl(e.target.value)} placeholder="https://drive.google.com/..." style={{ ...inputBaseStyle, paddingLeft: '38px' }} />
+              </div>
+              {recursoUrl && <a href={recursoUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', marginTop: '10px', fontSize: '12px', color: 'var(--capyme-blue-mid)', textDecoration: 'none', fontFamily: "'DM Sans', sans-serif" }}><ExternalLink style={{ width: '12px', height: '12px' }} />Abrir enlace en nueva pestaña</a>}
+            </div>
+            <div style={{ padding: '14px 22px', background: 'var(--gray-50)', borderTop: '1px solid var(--border)', borderRadius: '0 0 var(--radius-lg) var(--radius-lg)', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button onClick={handleCloseRecurso} style={{ padding: '8px 18px', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', background: '#fff', color: 'var(--gray-700)', fontSize: '14px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", cursor: 'pointer', transition: 'all 150ms ease' }}>Cancelar</button>
+              <button onClick={handleGuardarRecurso} disabled={submittingRecurso} style={{ padding: '8px 20px', border: 'none', borderRadius: 'var(--radius-md)', background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', color: '#fff', fontSize: '14px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", cursor: submittingRecurso ? 'not-allowed' : 'pointer', opacity: submittingRecurso ? 0.6 : 1, boxShadow: submittingRecurso ? 'none' : '0 2px 8px rgba(31,78,158,0.28)' }}>{submittingRecurso ? 'Guardando...' : 'Guardar recurso'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ConfirmModal config={confirmConfig} onClose={closeConfirm} />
+    </Layout>
+  );
+};
+
+const SectionTitle = ({ icon: Icon, text }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '4px' }}>
+    <Icon style={{ width: '14px', height: '14px', color: 'var(--gray-400)' }} />
+    <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--gray-400)', textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{text}</span>
+  </div>
+);
+
+const ErrorMsg = ({ text }) => (
+  <p style={{ marginTop: '4px', fontSize: '12px', color: '#EF4444', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: "'DM Sans', sans-serif" }}>
+    <AlertCircle style={{ width: '12px', height: '12px' }} /> {text}
+  </p>
+);
+
+export default JovenesConstruyendoFuturo;
