@@ -228,7 +228,20 @@ const CampanasAdmin = () => {
 
   return (
     <Layout>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+      {/* ESTILOS RESPONSIVOS AÑADIDOS AQUI */}
+      <style>{`
+        @media (max-width: 768px) {
+          .header-wrapper { flex-direction: column !important; align-items: flex-start !important; gap: 16px; }
+          .header-btn { width: 100%; justify-content: center; }
+          .filter-group { flex-direction: column !important; width: 100%; }
+          .filter-item { width: 100% !important; min-width: 100% !important; flex: none !important; }
+          .modal-grid-2 { grid-template-columns: 1fr !important; }
+          .modal-actions { flex-direction: column-reverse !important; }
+          .modal-actions button { width: 100%; }
+        }
+      `}</style>
+
+      <div className="header-wrapper" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
           <h1 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--gray-900)', fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: '-0.02em', marginBottom: '4px' }}>
             Campañas de Crowdfunding
@@ -240,6 +253,7 @@ const CampanasAdmin = () => {
         
         {currentUser.rol === 'admin' && (
           <button 
+            className="header-btn"
             onClick={() => handleOpenModal('create')}
             style={{ 
               display: 'flex', alignItems: 'center', gap: '8px', 
@@ -258,8 +272,8 @@ const CampanasAdmin = () => {
       <div style={{ background: '#fff', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden', marginBottom: '24px' }}>
         <div style={{ padding: '20px', borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-            <div style={{ position: 'relative', flex: '2', minWidth: '300px' }}>
+          <div className="filter-group" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+            <div className="filter-item" style={{ position: 'relative', flex: '2', minWidth: '300px' }}>
               <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '18px', height: '18px', color: 'var(--gray-400)' }} />
               <input 
                 type="text" 
@@ -270,7 +284,7 @@ const CampanasAdmin = () => {
               />
             </div>
 
-            <div style={{ position: 'relative', flex: '1', minWidth: '180px' }}>
+            <div className="filter-item" style={{ position: 'relative', flex: '1', minWidth: '180px' }}>
               <Filter style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: 'var(--gray-400)' }} />
               <select value={filterEstado} onChange={e => setFilterEstado(e.target.value)} style={{ ...selectStyle, paddingLeft: '38px' }}>
                 <option value="todos">Todos los Estados</option>
@@ -282,7 +296,7 @@ const CampanasAdmin = () => {
               <ChevronDown style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', width: '14px', color: 'var(--gray-400)', pointerEvents: 'none' }} />
             </div>
 
-            <div style={{ position: 'relative', flex: '1', minWidth: '180px' }}>
+            <div className="filter-item" style={{ position: 'relative', flex: '1', minWidth: '180px' }}>
               <Activity style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: 'var(--gray-400)' }} />
               <select value={filterTipo} onChange={e => setFilterTipo(e.target.value)} style={{ ...selectStyle, paddingLeft: '38px' }}>
                 <option value="todos">Todos los Tipos</option>
@@ -293,22 +307,23 @@ const CampanasAdmin = () => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1', minWidth: '280px' }}>
+          <div className="filter-group" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="filter-item" style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1', minWidth: '280px' }}>
               <DollarSign style={{ width: '16px', color: 'var(--gray-400)' }} />
               <input type="number" placeholder="Meta min." value={filterMetaMin} onChange={e => setFilterMetaMin(e.target.value)} style={{ ...inputBaseStyle, flex: 1 }} />
               <span style={{ color: 'var(--gray-300)' }}>—</span>
               <input type="number" placeholder="Meta max." value={filterMetaMax} onChange={e => setFilterMetaMax(e.target.value)} style={{ ...inputBaseStyle, flex: 1 }} />
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1', minWidth: '200px' }}>
+            <div className="filter-item" style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1', minWidth: '200px' }}>
               <Calendar style={{ width: '16px', color: 'var(--gray-400)' }} />
               <input type="date" value={filterFechaDesde} onChange={e => setFilterFechaDesde(e.target.value)} style={inputBaseStyle} />
             </div>
 
             <button 
+              className="filter-item"
               onClick={resetFilters}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'transparent', border: '1px solid var(--border)', padding: '10px 16px', borderRadius: 'var(--radius-md)', fontSize: '13px', fontWeight: 600, color: 'var(--gray-600)', cursor: 'pointer' }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: 'transparent', border: '1px solid var(--border)', padding: '10px 16px', borderRadius: 'var(--radius-md)', fontSize: '13px', fontWeight: 600, color: 'var(--gray-600)', cursor: 'pointer' }}
             >
               <X style={{ width: '14px' }} /> Limpiar
             </button>
@@ -316,7 +331,7 @@ const CampanasAdmin = () => {
         </div>
 
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
             <thead>
               <tr style={{ background: 'var(--gray-50)', borderBottom: '1px solid var(--border)' }}>
                 <th style={{ padding: '14px 20px', fontSize: '12px', fontWeight: 700, color: 'var(--gray-500)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Campaña</th>
@@ -342,7 +357,7 @@ const CampanasAdmin = () => {
                 >
                   <td style={{ padding: '16px 20px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '38px', height: '38px', borderRadius: 'var(--radius-md)', background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                      <div style={{ width: '38px', height: '38px', borderRadius: 'var(--radius-md)', background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", flexShrink: 0 }}>
                         {item.titulo.substring(0, 2).toUpperCase()}
                       </div>
                       <div>
@@ -413,7 +428,7 @@ const CampanasAdmin = () => {
                   </div>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div className="modal-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div>
                   <SectionTitle icon={DollarSign} text="Meta ($)" />
                   <input type="number" name="metaRecaudacion" value={formData.metaRecaudacion} onChange={handleChange} style={{ ...inputBaseStyle, marginTop: '12px' }} />
@@ -424,7 +439,7 @@ const CampanasAdmin = () => {
                 </div>
               </div>
             </div>
-            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+            <div className="modal-actions" style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
               <button onClick={handleCloseModal} style={{ padding: '10px 18px', background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', fontWeight: 600 }}>Cancelar</button>
               <button onClick={handleSubmit} disabled={submitting} style={{ padding: '10px 24px', background: 'var(--capyme-blue)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', fontWeight: 600 }}>{submitting ? 'Guardando...' : 'Guardar'}</button>
             </div>
@@ -436,15 +451,15 @@ const CampanasAdmin = () => {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(4px)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div style={{ background: '#fff', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: '600px', display: 'flex', flexDirection: 'column' }}>
             <div style={{ padding: '24px', borderBottom: '1px solid var(--border)' }}>
-              <h2 style={{ margin: 0 }}>{selectedItem.titulo}</h2>
+              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: 'var(--gray-900)' }}>{selectedItem.titulo}</h2>
             </div>
             <div style={{ padding: '24px' }}>
-              <p><strong>Tipo:</strong> {selectedItem.tipoCrowdfunding}</p>
-              <p><strong>Meta:</strong> ${selectedItem.metaRecaudacion}</p>
-              <p><strong>Recaudado:</strong> ${selectedItem.montoRecaudado}</p>
+              <p style={{ marginBottom: '8px' }}><strong>Tipo:</strong> <span style={{ textTransform: 'capitalize' }}>{selectedItem.tipoCrowdfunding}</span></p>
+              <p style={{ marginBottom: '8px' }}><strong>Meta:</strong> ${selectedItem.metaRecaudacion}</p>
+              <p style={{ marginBottom: '8px' }}><strong>Recaudado:</strong> ${selectedItem.montoRecaudado}</p>
             </div>
-            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
-              <button onClick={handleCloseModal} style={{ padding: '10px 18px', background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)' }}>Cerrar</button>
+            <div className="modal-actions" style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
+              <button onClick={handleCloseModal} style={{ padding: '10px 18px', background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', fontWeight: 600 }}>Cerrar</button>
             </div>
           </div>
         </div>
