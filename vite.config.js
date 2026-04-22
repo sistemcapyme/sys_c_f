@@ -7,7 +7,8 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'robots.txt', 'logo.png'],
+      // Corrección 1: Cambiado 'logo.png' a 'Logo.png' para que coincida con index.html
+      includeAssets: ['favicon.ico', 'robots.txt', 'Logo.png'], 
       manifest: {
         name: 'CAPYME - Consultoría Empresarial',
         short_name: 'CAPYME',
@@ -33,11 +34,7 @@ export default defineConfig({
             sizes: '128x128',
             type: 'image/png'
           },
-          {
-            src: '',
-            sizes: '144x144',
-            type: 'image/png'
-          },
+          // Corrección 2: Se eliminó el icono de 144x144 que causaba el error de "Download error"
           {
             src: '/icons/icon-152x152.png',
             sizes: '152x152',
