@@ -12,8 +12,8 @@ const BotonPagoMercadoPago = ({ titulo, precio, cantidad = 1, idReferencia, tipo
         titulo,
         precio,
         cantidad,
-        idReferencia,
-        tipo
+        idReferencia: idReferencia || `GEN-${Date.now()}`,
+        tipo: tipo || 'general'
       });
       if (res.success && res.init_point) {
         window.location.href = res.init_point;
