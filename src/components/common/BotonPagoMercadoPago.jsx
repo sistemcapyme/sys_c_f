@@ -15,10 +15,15 @@ const BotonPagoMercadoPago = ({ titulo, precio, cantidad = 1, idReferencia, tipo
         idReferencia: idReferencia || `GEN-${Date.now()}`,
         tipo: tipo || 'general'
       });
-      if (res.success && res.init_point) {
+      
+      // Ajustado para coincidir con la respuesta del backend
+      if (res.init_point) {
         window.location.href = res.init_point;
+      } else {
+        toast.error('No se recibió el link de pago');
       }
     } catch (error) {
+      console.error(error);
       toast.error('Error al iniciar el pago');
     } finally {
       setLoading(false);
