@@ -33,6 +33,9 @@ import ClienteContacto from './pages/cliente/Contacto';
 import PagoExitoso from './pages/PagoExitoso';
 import PagoFallido from './pages/PagoFallido';
 
+import CatalogosPublicos from './pages/CatalogosPublicos';
+import CatalogosAdmin from './pages/admin/CatalogosAdmin';
+
 function App() {
   return (
     <BrowserRouter>
@@ -50,6 +53,7 @@ function App() {
 
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/catalogos" element={<CatalogosPublicos />} />
 
         <Route path="/pago-exitoso"   element={<PagoExitoso />} />
         <Route path="/pago-fallido"   element={<PagoFallido />} />
@@ -68,6 +72,7 @@ function App() {
         <Route path="/jcf"            element={<ProtectedRoute allowedRoles={['admin','colaborador']}><JovenesConstruyendoFuturo /></ProtectedRoute>} />
         
         <Route path="/campanas"       element={<ProtectedRoute allowedRoles={['admin']}><CampanasAdmin /></ProtectedRoute>} />
+        <Route path="//admin/catalogos"       element={<ProtectedRoute allowedRoles={['admin']}><CatalogosAdmin /></ProtectedRoute>} />
 
         <Route path="/cliente/dashboard"      element={<ProtectedRoute allowedRoles={['cliente']}><ClienteDashboard /></ProtectedRoute>} />
         <Route path="/cliente/mis-negocios"   element={<ProtectedRoute allowedRoles={['cliente']}><MisNegocios /></ProtectedRoute>} />

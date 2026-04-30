@@ -7,7 +7,15 @@ const PagoExitoso = () => {
   const [countdown, setCountdown] = useState(5);
   
   const searchParams = new URLSearchParams(location.search);
-  const returnUrl = searchParams.get('return_url') || '/';
+  let returnUrl = searchParams.get('return_url') || '/';
+  
+  const paymentId = searchParams.get('payment_id');
+  const status = searchParams.get('status');
+
+  if (paymentId && status) {
+    const separator = returnUrl.includes('?') ? '&' : '?';
+    returnUrl += `${separator}payment_id=${paymentId}&status=${status}`;
+  }
 
   useEffect(() => {
     const timer = setInterval(() => {
