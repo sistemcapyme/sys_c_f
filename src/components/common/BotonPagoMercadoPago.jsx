@@ -8,15 +8,17 @@ const BotonPagoMercadoPago = ({ titulo, precio, cantidad = 1, idReferencia, tipo
   const handlePago = async () => {
     setLoading(true);
     try {
+      const returnUrl = window.location.pathname + window.location.search;
+
       const res = await pagosService.crearPreferencia({
         titulo,
         precio,
         cantidad,
         idReferencia: idReferencia || `GEN-${Date.now()}`,
-        tipo: tipo || 'general'
+        tipo: tipo || 'general',
+        returnUrl: returnUrl
       });
       
-      // Ajustado para coincidir con la respuesta del backend
       if (res.init_point) {
         window.location.href = res.init_point;
       } else {
