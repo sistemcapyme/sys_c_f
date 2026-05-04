@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Building2, FileText, GraduationCap,
   Users, BellRing, Link2, Phone, ClipboardList,
   X, ChevronRight, MessageCircle, UserCheck,
-  Megaphone, BookOpen
+  Megaphone, BookOpen, Library
 } from 'lucide-react';
 import LogoCapyme from '../../assets/LogoCapyme.png';
 
@@ -18,6 +18,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       { path: '/catalogos',       icon: BookOpen,        label: 'Ver Catálogo PDF' },
       { section: 'Gestión' },
       { path: '/dashboard',       icon: LayoutDashboard, label: 'Dashboard' },
+      { path: '/admin/catalogos', icon: Library,         label: 'Catálogos' },
       { path: '/negocios',        icon: Building2,       label: 'Negocios' },
       { path: '/programas',       icon: FileText,        label: 'Programas' },
       { path: '/postulaciones',   icon: ClipboardList,   label: 'Postulaciones' },
