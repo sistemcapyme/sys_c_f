@@ -26,6 +26,7 @@ const eliminarPdf = async (id) => {
 };
 
 const descargarPdf = async (pdf_id, payment_id) => {
+  // Asegúrate de usar los backticks (`) correctos para la interpolación
   const response = await axios.get(`/catalogos/descargar?pdf_id=${pdf_id}&payment_id=${payment_id}`);
   return response.data;
 };
