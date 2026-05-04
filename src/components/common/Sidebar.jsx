@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Building2, FileText, GraduationCap,
   Users, BellRing, Link2, Phone, ClipboardList,
   X, ChevronRight, MessageCircle, UserCheck,
-  Megaphone
+  Megaphone, BookOpen
 } from 'lucide-react';
 import LogoCapyme from '../../assets/LogoCapyme.png';
 
@@ -14,6 +14,8 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const menuItems = {
     admin: [
+      { section: 'Catálogo Público' },
+      { path: '/catalogos',       icon: BookOpen,        label: 'Ver Catálogo PDF' },
       { section: 'Gestión' },
       { path: '/dashboard',       icon: LayoutDashboard, label: 'Dashboard' },
       { path: '/negocios',        icon: Building2,       label: 'Negocios' },
@@ -29,6 +31,8 @@ const Sidebar = ({ isOpen, onClose }) => {
       { path: '/campanas',        icon: Megaphone,       label: 'Gestión Campañas' },
     ],
     colaborador: [
+      { section: 'Catálogo Público' },
+      { path: '/catalogos',       icon: BookOpen,        label: 'Ver Catálogo PDF' },
       { section: 'Gestión' },
       { path: '/dashboard',       icon: LayoutDashboard, label: 'Dashboard' },
       { path: '/negocios',        icon: Building2,       label: 'Negocios' },
@@ -42,6 +46,8 @@ const Sidebar = ({ isOpen, onClose }) => {
       { path: '/contacto',        icon: Phone,           label: 'Contacto' },
     ],
     cliente: [
+      { section: 'Catálogo Público' },
+      { path: '/catalogos',              icon: BookOpen,        label: 'Ver Catálogo PDF' },
       { section: 'Mi Espacio' },
       { path: '/cliente/dashboard',      icon: LayoutDashboard, label: 'Inicio' },
       { path: '/cliente/mis-negocios',   icon: Building2,       label: 'Mis Negocios' },
@@ -51,9 +57,15 @@ const Sidebar = ({ isOpen, onClose }) => {
       { path: '/cliente/avisos',         icon: BellRing,        label: 'Avisos' },
       { path: '/cliente/recursos',       icon: Link2,           label: 'Recursos' },
     ],
+    invitado: [
+      { section: 'Catálogo Público' },
+      { path: '/catalogos',       icon: BookOpen,        label: 'Catálogo de PDFs' },
+      { section: 'Acceso' },
+      { path: '/login',           icon: Users,           label: 'Iniciar Sesión' },
+    ]
   };
 
-  const currentMenu = menuItems[user?.rol] || menuItems.cliente;
+  const currentMenu = user ? (menuItems[user.rol] || menuItems.cliente) : menuItems.invitado;
   const isActive = (path) => location.pathname === path;
 
   return (
@@ -85,7 +97,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           padding: '12px 16px', borderBottom: '1px solid var(--border)',
           minHeight: '64px', flexShrink: 0,
         }}>
-          <Link to="/dashboard" onClick={onClose} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+          <Link to={user ? "/dashboard" : "/catalogos"} onClick={onClose} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
             <img src={LogoCapyme} alt="CAPYME" style={{ height: '34px', width: 'auto', objectFit: 'contain' }} />
           </Link>
           <button

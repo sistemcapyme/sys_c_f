@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { catalogosService } from '../services/catalogosService';
 import BotonPagoPdf from '../components/common/BotonPagoPdf';
 import { toast } from 'react-hot-toast';
+import { FileText, X } from 'lucide-react';
 
 const CatalogosPublicos = () => {
   const [pdfs, setPdfs] = useState([]);
@@ -52,51 +53,115 @@ const CatalogosPublicos = () => {
     }
   };
 
-  if (loading || procesandoDescarga) return <div className="flex justify-center items-center h-screen">Cargando...</div>;
+  if (loading || procesandoDescarga) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: 'var(--bg-body)' }}>
+        <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 600, color: 'var(--gray-600)' }}>Cargando catálogo...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">Catálogo de PDFs</h1>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+        <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '2.5rem', fontWeight: 800, color: 'var(--gray-900)', marginBottom: '10px' }}>
+          Catálogo de PDFs
+        </h1>
+        <p style={{ color: 'var(--gray-500)', fontSize: '1.1rem' }}>Adquiere material digital exclusivo al instante.</p>
+      </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '24px' }}>
         {pdfs.map((pdf) => (
-          <div key={pdf.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition">
-            <div className="p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-2 truncate">{pdf.titulo}</h2>
-              <p className="text-gray-600 line-clamp-3 mb-4">{pdf.descripcion}</p>
-              <div className="flex justify-between items-center mt-4">
-                <span className="text-2xl font-black text-blue-600">${pdf.precio}</span>
-                <button
-                  onClick={() => setPdfSeleccionado(pdf)}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-semibold transition"
-                >
-                  Ver Detalles
-                </button>
+          <div key={pdf.id} style={{
+            background: 'var(--surface)', borderRadius: 'var(--radius-xl)', padding: '24px',
+            border: '1px solid var(--border)', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+            display: 'flex', flexDirection: 'column', transition: 'transform 0.2s, box-shadow 0.2s',
+            cursor: 'pointer'
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.05)'; }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+              <div style={{ background: 'var(--capyme-blue-pale)', padding: '12px', borderRadius: 'var(--radius-lg)', color: 'var(--capyme-blue)' }}>
+                <FileText size={24} />
               </div>
+              <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '1.1rem', fontWeight: 700, color: 'var(--gray-800)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                {pdf.titulo}
+              </h2>
+            </div>
+            
+            <p style={{ color: 'var(--gray-500)', fontSize: '0.95rem', lineHeight: 1.5, flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', marginBottom: '24px' }}>
+              {pdf.descripcion}
+            </p>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid var(--gray-100)' }}>
+              <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--capyme-blue)' }}>
+                ${pdf.precio} <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--gray-400)' }}>MXN</span>
+              </span>
+              <button
+                onClick={() => setPdfSeleccionado(pdf)}
+                style={{
+                  padding: '8px 16px', background: 'var(--gray-100)', color: 'var(--gray-700)',
+                  border: 'none', borderRadius: 'var(--radius-md)', fontWeight: 600, cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--gray-200)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'var(--gray-100)'}
+              >
+                Detalles
+              </button>
             </div>
           </div>
         ))}
       </div>
 
       {pdfSeleccionado && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-lg w-full p-6 relative">
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.6)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '20px'
+        }}>
+          <div style={{
+            background: 'var(--surface)', borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '500px',
+            position: 'relative', display: 'flex', flexDirection: 'column', maxHeight: '90vh', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+          }}>
             <button 
               onClick={() => setPdfSeleccionado(null)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+              style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--gray-400)', padding: '4px' }}
             >
-              ✕
+              <X size={24} />
             </button>
-            <h2 className="text-2xl font-bold text-gray-800 mb-4 pr-6">{pdfSeleccionado.titulo}</h2>
-            <div className="bg-gray-50 p-4 rounded-lg mb-6 max-h-60 overflow-y-auto">
-              <p className="text-gray-700 whitespace-pre-wrap">{pdfSeleccionado.descripcion}</p>
+            
+            <div style={{ padding: '32px 32px 0 32px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+                <div style={{ background: 'var(--capyme-blue-pale)', padding: '16px', borderRadius: 'var(--radius-lg)', color: 'var(--capyme-blue)' }}>
+                  <FileText size={32} />
+                </div>
+                <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '1.5rem', fontWeight: 800, color: 'var(--gray-900)', margin: 0, paddingRight: '20px' }}>
+                  {pdfSeleccionado.titulo}
+                </h2>
+              </div>
             </div>
-            <div className="border-t pt-4">
+
+            <div style={{ padding: '0 32px 24px 32px', overflowY: 'auto', flexGrow: 1 }}>
+              <h3 style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, color: 'var(--gray-400)', marginBottom: '8px' }}>Descripción del contenido</h3>
+              <p style={{ color: 'var(--gray-600)', fontSize: '1rem', lineHeight: 1.6, whiteSpace: 'pre-wrap', background: 'var(--gray-50)', padding: '16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--gray-100)' }}>
+                {pdfSeleccionado.descripcion}
+              </p>
+            </div>
+
+            <div style={{ padding: '24px 32px', borderTop: '1px solid var(--border)', background: 'var(--gray-50)', borderBottomLeftRadius: 'var(--radius-xl)', borderBottomRightRadius: 'var(--radius-xl)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <span style={{ color: 'var(--gray-500)', fontWeight: 500 }}>Total a pagar</span>
+                <span style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--capyme-blue)' }}>${pdfSeleccionado.precio} <span style={{ fontSize: '1rem', color: 'var(--gray-500)' }}>MXN</span></span>
+              </div>
               <BotonPagoPdf 
                 titulo={pdfSeleccionado.titulo} 
                 precio={pdfSeleccionado.precio} 
                 pdfId={pdfSeleccionado.id} 
               />
+              <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--gray-400)', marginTop: '12px' }}>
+                Al pagar, la descarga comenzará automáticamente.
+              </p>
             </div>
           </div>
         </div>
