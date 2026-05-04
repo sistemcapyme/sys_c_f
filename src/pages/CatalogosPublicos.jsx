@@ -26,53 +26,67 @@ const CatalogosPublicos = () => {
 
   return (
     <Layout>
-      <div className="py-8 px-4 max-w-7xl mx-auto font-sans min-h-[80vh]">
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes modalIn { from { opacity:0; transform:scale(0.96) translateY(8px); } to { opacity:1; transform:scale(1) translateY(0); } }
+      `}</style>
+
+      <div style={{ padding: '40px 20px', maxWidth: '1200px', margin: '0 auto', minHeight: '80vh' }}>
         
-        {/* Cabecera */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-display font-black text-[#0F2A5A] mb-4 tracking-tight">
-            Catálogo de <span className="text-[#1F4E9E]">PDFs</span>
+        
+        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '38px', fontWeight: 900, color: 'var(--capyme-dark)', letterSpacing: '-0.02em', marginBottom: '12px' }}>
+            Catálogo de <span style={{ color: 'var(--capyme-blue-mid)' }}>PDFs</span>
           </h1>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto font-medium">
+          <p style={{ fontSize: '16px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif", maxWidth: '600px', margin: '0 auto', lineHeight: 1.6 }}>
             Adquiere material digital exclusivo y herramientas prácticas para tu negocio al instante.
           </p>
         </div>
 
-        {/* Estado de Carga */}
+        
         {loading ? (
-           <div className="flex flex-col items-center justify-center py-20 gap-4">
-             <div className="w-10 h-10 border-4 border-[#EEF4FF] border-t-[#1F4E9E] rounded-full animate-spin"></div>
-             <p className="text-gray-500 font-medium">Cargando catálogos disponibles...</p>
-           </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0', gap: '16px' }}>
+            <div style={{ width: '40px', height: '40px', border: '4px solid var(--capyme-blue-pale)', borderTopColor: 'var(--capyme-blue-mid)', borderRadius: '50%', animation: 'spin 700ms linear infinite' }}></div>
+            <p style={{ fontSize: '14px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif", fontWeight: 500 }}>Cargando catálogos disponibles...</p>
+          </div>
         ) : pdfs.length > 0 ? (
           
           /* Grid de Tarjetas */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '32px' }}>
             {pdfs.map((pdf) => (
-              <div key={pdf.id} className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 flex flex-col justify-between group overflow-hidden">
-                <div className="p-6 md:p-8 flex-grow">
-                  <div className="w-12 h-12 bg-[#EEF4FF] text-[#1F4E9E] rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                    <FileText size={24} />
+              <div 
+                key={pdf.id} 
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-6px)'; e.currentTarget.style.boxShadow = '0 12px 24px rgba(15,42,90,0.1)'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(15,42,90,0.06)'; }}
+                style={{ background: '#fff', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)', boxShadow: '0 4px 12px rgba(15,42,90,0.06)', overflow: 'hidden', display: 'flex', flexDirection: 'column', transition: 'all 250ms ease' }}
+              >
+                <div style={{ padding: '28px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ width: '52px', height: '52px', background: 'var(--capyme-blue-pale)', color: 'var(--capyme-blue-mid)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+                    <FileText style="{{" width: '26px', height: '26px' }}/>
                   </div>
-                  <h3 className="text-xl font-display font-bold text-[#0F2A5A] mb-3 line-clamp-2 leading-tight">
+                  <h3 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '20px', fontWeight: 800, color: 'var(--capyme-dark)', marginBottom: '12px', lineHeight: 1.3 }}>
                     {pdf.titulo}
                   </h3>
-                  <p className="text-gray-500 mb-6 line-clamp-3 text-sm leading-relaxed">
+                  <p style={{ fontSize: '14px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, marginBottom: '24px', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                     {pdf.descripcion}
                   </p>
-                  <div className="mt-auto">
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Inversión</span>
-                    <div className="text-3xl font-display font-black text-[#1F4E9E]">
+                  <div style={{ marginTop: 'auto' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--gray-400)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px', display: 'block', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                      Inversión
+                    </span>
+                    <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '28px', fontWeight: 900, color: 'var(--capyme-blue-mid)' }}>
                       ${Number(pdf.precio).toFixed(2)}
                     </div>
                   </div>
                 </div>
-                <div className="p-4 md:p-6 bg-gray-50/80 border-t border-gray-50">
+                <div style={{ padding: '20px 24px', background: 'var(--gray-50)', borderTop: '1px solid var(--border)' }}>
                   <button 
                     onClick={() => setSelectedPdf(pdf)} 
-                    className="w-full flex items-center justify-center gap-2 bg-white text-[#1F4E9E] border border-[#1F4E9E]/20 font-bold py-3 px-4 rounded-xl hover:bg-[#1F4E9E] hover:text-white transition-all shadow-sm"
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--capyme-blue-mid)'; e.currentTarget.style.color = '#fff'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = 'var(--capyme-blue-mid)'; }}
+                    style={{ width: '100%', padding: '14px', background: '#fff', border: '1px solid var(--capyme-blue-mid)', color: 'var(--capyme-blue-mid)', borderRadius: 'var(--radius-md)', fontSize: '14px', fontWeight: 700, fontFamily: "'DM Sans', sans-serif", cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 200ms ease' }}
                   >
-                    Ver Detalles <ChevronRight size={18} />
+                    Ver Detalles <ChevronRight style="{{" width: '18px', height: '18px' }}/>
                   </button>
                 </div>
               </div>
@@ -81,58 +95,65 @@ const CatalogosPublicos = () => {
         ) : (
           
           /* Estado Vacío */
-          <div className="text-center py-20 bg-white rounded-3xl shadow-sm border border-gray-100 max-w-3xl mx-auto">
-            <BookOpen size={48} className="mx-auto text-[#EEF4FF] mb-4" />
-            <h3 className="text-xl font-display font-bold text-[#0F2A5A] mb-2">Próximamente nuevos catálogos</h3>
-            <p className="text-gray-500">Aún no hay catálogos públicos disponibles. Vuelve más tarde.</p>
+          <div style={{ textAlign: 'center', padding: '60px 20px', background: '#fff', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)', maxWidth: '600px', margin: '0 auto' }}>
+            <BookOpen style="{{" width: '48px', height: color: 'var(--gray-300)', margin: '0 auto 16px' }}/>
+            <h3 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '20px', fontWeight: 800, color: 'var(--capyme-dark)', marginBottom: '8px' }}>
+              Próximamente nuevos catálogos
+            </h3>
+            <p style={{ fontSize: '14px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif" }}>
+              Aún no hay catálogos públicos disponibles. Vuelve más tarde.
+            </p>
           </div>
         )}
 
-        {/* Modal de Detalles y Pago */}
+        
         {selectedPdf && (
-          <div className="fixed inset-0 bg-[#0F2A5A]/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4 transition-opacity">
-            <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,42,90,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+            <div style={{ background: '#fff', borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '520px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflow: 'hidden', animation: 'modalIn 0.25s ease both' }}>
               
-              <div className="p-6 md:p-8 overflow-y-auto">
-                <div className="flex items-start gap-4 mb-6">
-                  <div className="w-14 h-14 bg-[#EEF4FF] text-[#1F4E9E] rounded-2xl flex items-center justify-center flex-shrink-0">
-                    <FileText size={28} />
+              <div style={{ padding: '32px', overflowY: 'auto' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '24px' }}>
+                  <div style={{ width: '56px', height: '56px', background: 'var(--capyme-blue-pale)', color: 'var(--capyme-blue-mid)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <FileText style="{{" width: '28px', height: '28px' }}/>
                   </div>
-                  <h2 className="text-2xl font-display font-extrabold text-[#0F2A5A] leading-tight pt-1">
+                  <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '24px', fontWeight: 800, color: 'var(--capyme-dark)', margin: 0, lineHeight: 1.2, paddingTop: '4px' }}>
                     {selectedPdf.titulo}
                   </h2>
                 </div>
                 
-                <div className="bg-[#EEF4FF]/50 p-5 rounded-2xl mb-8 border border-[#EEF4FF]">
-                  <h4 className="text-xs font-bold text-[#1F4E9E] uppercase tracking-wider mb-2">Acerca de este material</h4>
-                  <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
+                <div style={{ background: 'var(--capyme-blue-pale)', padding: '20px', borderRadius: 'var(--radius-md)', marginBottom: '32px', border: '1px solid rgba(43,91,166,0.1)' }}>
+                  <h4 style={{ fontSize: '11px', fontWeight: 800, color: 'var(--capyme-blue-mid)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                    Acerca de este material
+                  </h4>
+                  <p style={{ fontSize: '14px', color: 'var(--gray-700)', fontFamily: "'DM Sans', sans-serif", lineHeight: 1.6, whiteSpace: 'pre-wrap', margin: 0 }}>
                     {selectedPdf.descripcion}
                   </p>
                 </div>
                 
-                <div className="flex justify-between items-end mb-8 p-5 bg-gray-50 rounded-2xl border border-gray-100">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px', padding: '20px', background: 'var(--gray-50)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
                   <div>
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Total a pagar</span>
-                    <span className="text-4xl font-display font-black text-[#1F4E9E]">
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--gray-500)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                      Total a pagar
+                    </span>
+                    <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '36px', fontWeight: 900, color: 'var(--capyme-blue-mid)' }}>
                       ${Number(selectedPdf.precio).toFixed(2)}
                     </span>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-3">
-                  <BotonPagoMercadoPago 
-                    idArticulo={selectedPdf.id} 
-                    titulo={selectedPdf.titulo} 
-                    precio={selectedPdf.precio} 
-                  />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <BotonPagoMercadoPago idArticulo="{selectedPdf.id}" titulo="{selectedPdf.titulo}" precio="{selectedPdf.precio}"/>
                   <button 
                     onClick={() => setSelectedPdf(null)} 
-                    className="w-full bg-white text-gray-500 border border-gray-200 font-bold py-3.5 px-4 rounded-xl hover:bg-gray-50 hover:text-gray-700 transition-colors"
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-100)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = '#fff'; }}
+                    style={{ width: '100%', padding: '14px', background: '#fff', border: '1px solid var(--border)', color: 'var(--gray-600)', borderRadius: 'var(--radius-md)', fontSize: '14px', fontWeight: 700, fontFamily: "'DM Sans', sans-serif", cursor: 'pointer', transition: 'all 150ms ease' }}
                   >
                     Cancelar
                   </button>
                 </div>
               </div>
+
             </div>
           </div>
         )}
