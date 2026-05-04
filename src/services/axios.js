@@ -34,9 +34,7 @@ api.interceptors.response.use(
       if (esInactivo) {
         let contacto = null;
         try {
-          const resp = await axios.get(
-            `${import.meta.env.VITE_API_URL}/contacto`
-          );
+          const resp = await api.get('/contacto');
           if (resp.data?.success && resp.data?.data) {
             contacto = {
               email:    resp.data.data.email    || null,
