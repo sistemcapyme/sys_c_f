@@ -10,7 +10,9 @@ const createContacto = async (contactoData) => {
   return response.data;
 };
 
-export default {
+const contactoService = {
   getContactos,
   createContacto,
 };
+export { contactoService };
+export default contactoService;
