@@ -18,7 +18,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       { path: '/catalogos',       icon: BookOpen,        label: 'Ver Catálogo PDF' },
       { section: 'Gestión' },
       { path: '/dashboard',       icon: LayoutDashboard, label: 'Dashboard' },
-      { path: '/admin/catalogos', icon: Library,         label: 'Catálogos' },
+      { path: '/admin/catalogos', icon: Library,         label: 'Catálogos' }, 
       { path: '/negocios',        icon: Building2,       label: 'Negocios' },
       { path: '/programas',       icon: FileText,        label: 'Programas' },
       { path: '/postulaciones',   icon: ClipboardList,   label: 'Postulaciones' },
