@@ -6,7 +6,7 @@ const getContactos = async () => {
 };
 
 const createContacto = async (contactoData) => {
-  const response = await axios.post('/api/contacto', contactoData);
+  const response = await axios.post('/api /contacto', contactoData);
   return response.data;
 };
 
