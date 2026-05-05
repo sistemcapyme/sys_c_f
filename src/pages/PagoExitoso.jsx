@@ -9,7 +9,7 @@ const PagoExitoso = () => {
   const [countdown, setCountdown] = useState(5);
   
   const searchParams = new URLSearchParams(location.search);
-  const returnUrl = searchParams.get('return_url') || '/';
+  const returnUrl = searchParams.get('return_url') || '/dashboard';
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -58,7 +58,7 @@ const PagoExitoso = () => {
             </h2>
             
             <p style={{ fontSize: '15px', color: 'var(--gray-600)', lineHeight: 1.6, marginBottom: '32px' }}>
-              Tu transacción se ha procesado correctamente. Gracias por confiar en nosotros.
+              Tu transacción se ha procesado correctamente. Gracias por tu pago.
             </p>
 
             <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--gray-400)', marginBottom: '24px' }}>

@@ -9,7 +9,7 @@ const PagoFallido = () => {
   const [countdown, setCountdown] = useState(5);
   
   const searchParams = new URLSearchParams(location.search);
-  const returnUrl = searchParams.get('return_url') || '/';
+  const returnUrl = searchParams.get('return_url') || '/dashboard';
 
   useEffect(() => {
     const timer = setInterval(() => {

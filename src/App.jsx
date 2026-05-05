@@ -77,7 +77,7 @@ function App() {
         <Route path="/jcf"            element={<ProtectedRoute allowedRoles={['admin','colaborador']}><JovenesConstruyendoFuturo /></ProtectedRoute>} />
         
         <Route path="/campanas"       element={<ProtectedRoute allowedRoles={['admin']}><CampanasAdmin /></ProtectedRoute>} />
-        <Route path="//admin/catalogos"       element={<ProtectedRoute allowedRoles={['admin']}><CatalogosAdmin /></ProtectedRoute>} />
+        <Route path="/admin/catalogos"       element={<ProtectedRoute allowedRoles={['admin']}><CatalogosAdmin /></ProtectedRoute>} />
 
         <Route path="/cliente/dashboard"      element={<ProtectedRoute allowedRoles={['cliente']}><ClienteDashboard /></ProtectedRoute>} />
         <Route path="/cliente/mis-negocios"   element={<ProtectedRoute allowedRoles={['cliente']}><MisNegocios /></ProtectedRoute>} />

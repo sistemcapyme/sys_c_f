@@ -212,6 +212,7 @@ const CatalogosAdmin = () => {
       submitData.append('linkDrive', formData.linkDrive);
       submitData.append('activo', formData.activo);
       
+      // Asegurarse de adjuntar el archivo si el usuario seleccionó uno
       if (imagenArchivo) {
         submitData.append('imagen', imagenArchivo);
       }
@@ -469,30 +470,33 @@ const CatalogosAdmin = () => {
                 <SectionTitle icon={ImageIcon} text="Apariencia Visual" />
                 <div>
                   <label style={labelStyle}>Portada del Catálogo</label>
-                  <div style={{ border: '2px dashed var(--border)', borderRadius: 'var(--radius-md)', padding: previewUrl ? '4px' : '32px', textAlign: 'center', position: 'relative', background: 'var(--gray-50)', transition: 'all 200ms ease' }}>
+                  
+                  {/* Zona Interactiva de Imagen Mejorada */}
+                  <div style={{ position: 'relative', width: '100%', height: '200px', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: previewUrl ? 'none' : '2px dashed var(--capyme-blue-mid)', background: 'var(--gray-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 200ms ease' }}>
                     {previewUrl ? (
-                      <div style={{ position: 'relative', width: '100%', height: '180px', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+                      <>
                         <img src={previewUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        {/* Overlay al pasar el mouse para cambiar la imagen */}
                         <div 
-                          style={{ position: 'absolute', inset: 0, background: 'rgba(15,42,90,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 200ms ease', cursor: 'pointer' }} 
+                          style={{ position: 'absolute', inset: 0, background: 'rgba(15,42,90,0.7)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 200ms ease' }} 
                           onMouseEnter={e => e.currentTarget.style.opacity = 1} 
                           onMouseLeave={e => e.currentTarget.style.opacity = 0}
                         >
-                           <label style={{ cursor: 'pointer', background: '#fff', color: 'var(--capyme-dark)', padding: '8px 16px', borderRadius: 'var(--radius-sm)', fontSize: '13px', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", display: 'flex', alignItems: 'center', gap: '6px' }}>
-                             <UploadCloud size={16} /> Cambiar Portada
-                             <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
-                           </label>
+                          <UploadCloud style={{ color: '#fff', width: '32px', height: '32px', marginBottom: '8px' }} />
+                          <span style={{ color: '#fff', fontSize: '14px', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Cambiar Portada</span>
+                          {/* El input oculto abarca todo el cuadro */}
+                          <input type="file" accept="image/*" onChange={handleImageChange} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
                         </div>
-                      </div>
+                      </>
                     ) : (
-                      <label style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ width: '48px', height: '48px', background: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--shadow-sm)', color: 'var(--capyme-blue-mid)' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '20px', textAlign: 'center', width: '100%', height: '100%', justifyContent: 'center' }}>
+                        <div style={{ width: '48px', height: '48px', background: 'var(--capyme-blue-pale)', color: 'var(--capyme-blue-mid)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
                           <UploadCloud style={{ width: '24px', height: '24px' }} />
                         </div>
-                        <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--capyme-blue-mid)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Haz clic para subir una imagen</span>
-                        <span style={{ fontSize: '12px', color: 'var(--gray-400)', fontFamily: "'DM Sans', sans-serif" }}>PNG, JPG o WEBP (Recomendado 800x600px)</span>
-                        <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
-                      </label>
+                        <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--capyme-dark)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Haz clic para cargar una imagen</span>
+                        <span style={{ fontSize: '12px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif" }}>Formato JPG, PNG o WEBP</span>
+                        <input type="file" accept="image/*" onChange={handleImageChange} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
+                      </div>
                     )}
                   </div>
                 </div>
