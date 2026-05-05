@@ -1,7 +1,11 @@
 import axios from './axios';
 
 const crearPdf = async (data) => {
-  const response = await axios.post('/catalogos', data);
+  const response = await axios.post('/catalogos', data, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
   return response.data;
 };
 
@@ -16,7 +20,11 @@ const obtenerPublicos = async () => {
 };
 
 const actualizarPdf = async (id, data) => {
-  const response = await axios.put(`/catalogos/${id}`, data);
+  const response = await axios.put(`/catalogos/${id}`, data, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
   return response.data;
 };
 
