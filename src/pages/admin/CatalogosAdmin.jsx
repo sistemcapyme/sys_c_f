@@ -4,8 +4,8 @@ import catalogosService from '../../services/catalogosService';
 import { useAuthStore } from '../../store/authStore';
 import {
   FileText, Plus, Search, Edit, Trash2, X, Link as LinkIcon,
-  ChevronDown, AlertCircle, CheckCircle, ExternalLink,
-  DollarSign, FileCheck, Shield, AlertTriangle, Image as ImageIcon, UploadCloud
+  ChevronDown, AlertCircle, ExternalLink,
+  DollarSign, FileCheck, AlertTriangle, Image as ImageIcon, UploadCloud, Eye, EyeOff
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -212,7 +212,6 @@ const CatalogosAdmin = () => {
       submitData.append('linkDrive', formData.linkDrive);
       submitData.append('activo', formData.activo);
       
-      // Asegurarse de adjuntar el archivo si el usuario seleccionó uno
       if (imagenArchivo) {
         submitData.append('imagen', imagenArchivo);
       }
@@ -236,13 +235,13 @@ const CatalogosAdmin = () => {
   const handleToggleActivo = (pdf) => {
     const desactivar = pdf.activo;
     showConfirm({
-      variant: desactivar ? 'danger' : 'warning',
-      title: desactivar ? 'Desactivar catálogo' : 'Activar catálogo',
+      variant: 'warning',
+      title: desactivar ? 'Ocultar catálogo' : 'Mostrar catálogo',
       subtitle: desactivar
         ? 'El catálogo no será visible para los clientes'
         : 'El catálogo volverá a ser visible',
-      message: `¿Confirmas que deseas ${desactivar ? 'desactivar' : 'activar'} el archivo "${pdf.titulo}"?`,
-      confirmLabel: desactivar ? 'Sí, desactivar' : 'Sí, activar',
+      message: `¿Confirmas que deseas ${desactivar ? 'ocultar' : 'mostrar'} el archivo "${pdf.titulo}"?`,
+      confirmLabel: desactivar ? 'Sí, ocultar' : 'Sí, mostrar',
       onConfirm: async () => {
         try {
           const submitData = new FormData();
@@ -253,10 +252,29 @@ const CatalogosAdmin = () => {
           submitData.append('activo', !pdf.activo);
 
           await catalogosService.actualizarPdf(pdf.id, submitData);
-          toast.success(`Catálogo ${desactivar ? 'desactivado' : 'activado'} exitosamente`);
+          toast.success(`Catálogo ${desactivar ? 'ocultado' : 'mostrado'} exitosamente`);
           fetchPdfs();
         } catch (error) {
           toast.error('Error al cambiar el estado');
+        }
+      },
+    });
+  };
+
+  const handleDelete = (pdf) => {
+    showConfirm({
+      variant: 'danger',
+      title: 'Eliminar catálogo',
+      subtitle: 'Esta acción es irreversible',
+      message: `¿Confirmas que deseas eliminar definitivamente el catálogo "${pdf.titulo}"? Su imagen también será eliminada de los servidores.`,
+      confirmLabel: 'Sí, eliminar',
+      onConfirm: async () => {
+        try {
+          await catalogosService.eliminarPdf(pdf.id);
+          toast.success('Catálogo eliminado exitosamente');
+          fetchPdfs();
+        } catch (error) {
+          toast.error('Error al eliminar el catálogo');
         }
       },
     });
@@ -408,7 +426,7 @@ const CatalogosAdmin = () => {
                         </td>
                         <td style={{ padding: '14px 24px' }}>
                           <span style={{ display: 'inline-block', padding: '3px 10px', background: pdf.activo ? '#ECFDF5' : '#FEF2F2', color: pdf.activo ? '#065F46' : '#DC2626', borderRadius: 'var(--radius-sm)', fontSize: '11px', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                            {pdf.activo ? 'Activo' : 'Inactivo'}
+                            {pdf.activo ? 'Activo' : 'Oculto'}
                           </span>
                         </td>
                         <td style={{ padding: '14px 24px', textAlign: 'right' }}>
@@ -418,14 +436,18 @@ const CatalogosAdmin = () => {
                             </button>
 
                             {pdf.activo ? (
-                              <button onClick={() => handleToggleActivo(pdf)} title="Desactivar catálogo" style={{ width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', borderRadius: 'var(--radius-sm)', background: 'transparent', cursor: 'pointer', color: 'var(--gray-400)', transition: 'all 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.background = '#FEF2F2'; e.currentTarget.style.color = '#DC2626'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-400)'; }}>
-                                <Trash2 style={{ width: '16px', height: '16px' }} />
+                              <button onClick={() => handleToggleActivo(pdf)} title="Ocultar catálogo" style={{ width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', borderRadius: 'var(--radius-sm)', background: 'transparent', cursor: 'pointer', color: 'var(--gray-400)', transition: 'all 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.background = '#FFFBEB'; e.currentTarget.style.color = '#D97706'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-400)'; }}>
+                                <EyeOff style={{ width: '16px', height: '16px' }} />
                               </button>
                             ) : (
-                              <button onClick={() => handleToggleActivo(pdf)} title="Activar catálogo" style={{ width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', borderRadius: 'var(--radius-sm)', background: 'transparent', cursor: 'pointer', color: 'var(--gray-400)', transition: 'all 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.background = '#ECFDF5'; e.currentTarget.style.color = '#065F46'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-400)'; }}>
-                                <CheckCircle style={{ width: '16px', height: '16px' }} />
+                              <button onClick={() => handleToggleActivo(pdf)} title="Mostrar catálogo" style={{ width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', borderRadius: 'var(--radius-sm)', background: 'transparent', cursor: 'pointer', color: 'var(--gray-400)', transition: 'all 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.background = '#ECFDF5'; e.currentTarget.style.color = '#065F46'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-400)'; }}>
+                                <Eye style={{ width: '16px', height: '16px' }} />
                               </button>
                             )}
+
+                            <button onClick={() => handleDelete(pdf)} title="Eliminar catálogo" style={{ width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', borderRadius: 'var(--radius-sm)', background: 'transparent', cursor: 'pointer', color: 'var(--gray-400)', transition: 'all 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.background = '#FEF2F2'; e.currentTarget.style.color = '#DC2626'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-400)'; }}>
+                              <Trash2 style={{ width: '16px', height: '16px' }} />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -471,12 +493,10 @@ const CatalogosAdmin = () => {
                 <div>
                   <label style={labelStyle}>Portada del Catálogo</label>
                   
-                  {/* Zona Interactiva de Imagen Mejorada */}
                   <div style={{ position: 'relative', width: '100%', height: '200px', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: previewUrl ? 'none' : '2px dashed var(--capyme-blue-mid)', background: 'var(--gray-50)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 200ms ease' }}>
                     {previewUrl ? (
                       <>
                         <img src={previewUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        {/* Overlay al pasar el mouse para cambiar la imagen */}
                         <div 
                           style={{ position: 'absolute', inset: 0, background: 'rgba(15,42,90,0.7)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 200ms ease' }} 
                           onMouseEnter={e => e.currentTarget.style.opacity = 1} 
@@ -484,7 +504,6 @@ const CatalogosAdmin = () => {
                         >
                           <UploadCloud style={{ color: '#fff', width: '32px', height: '32px', marginBottom: '8px' }} />
                           <span style={{ color: '#fff', fontSize: '14px', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Cambiar Portada</span>
-                          {/* El input oculto abarca todo el cuadro */}
                           <input type="file" accept="image/*" onChange={handleImageChange} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
                         </div>
                       </>
