@@ -1,9 +1,7 @@
 import axios from './axios';
 
 const crearPdf = async (data) => {
-  const response = await axios.post('/catalogos', data, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
+  const response = await axios.post('/catalogos', data);
   return response.data;
 };
 
@@ -18,14 +16,17 @@ const obtenerPublicos = async () => {
 };
 
 const actualizarPdf = async (id, data) => {
-  const response = await axios.put(`/catalogos/${id}`, data, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
+  const response = await axios.put(`/catalogos/${id}`, data);
   return response.data;
 };
 
 const eliminarPdf = async (id) => {
   const response = await axios.delete(`/catalogos/${id}`);
+  return response.data;
+};
+
+const crearPreferencia = async (data) => {
+  const response = await axios.post('/catalogos/crear-preferencia', data);
   return response.data;
 };
 
@@ -40,5 +41,6 @@ export default {
   obtenerPublicos,
   actualizarPdf,
   eliminarPdf,
+  crearPreferencia,
   descargarPdf
 };

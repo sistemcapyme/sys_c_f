@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import catalogosService from '../services/catalogosService';
-import BotonPagoMercadoPago from '../components/common/BotonPagoMercadoPago';
+import BotonPagoCatalogoMP from '../components/common/BotonPagoCatalogoMP';
 import { BookOpen, FileText, ChevronRight, Download, CheckCircle, X, AlertCircle } from 'lucide-react';
 import LogoCapyme from '../assets/LogoCapyme.png'; 
 
@@ -27,7 +27,7 @@ const CatalogosPublicos = () => {
       const data = await catalogosService.obtenerPublicos();
       setPdfs(data);
     } catch (error) {
-      console.error('Error al obtener los catálogos públicos:', error);
+      console.error('Error al obtener los catálogos:', error);
     } finally {
       setLoading(false);
     }
@@ -173,7 +173,6 @@ const CatalogosPublicos = () => {
                 className="catalogo-card" 
                 style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', display: 'flex', flexDirection: 'column', animationDelay: `${idx * 40}ms` }}
               >
-                {/* Contenedor de Imagen de Portada */}
                 <div style={{ height: '180px', width: '100%', background: 'var(--gray-100)', position: 'relative', overflow: 'hidden' }}>
                   {pdf.imagenUrl ? (
                     <img src={pdf.imagenUrl} alt={pdf.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -267,7 +266,7 @@ const CatalogosPublicos = () => {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <BotonPagoMercadoPago 
+                  <BotonPagoCatalogoMP 
                     idArticulo={selectedPdf.id} 
                     titulo={selectedPdf.titulo} 
                     precio={selectedPdf.precio} 
@@ -290,4 +289,4 @@ const CatalogosPublicos = () => {
   );
 };
 
-export default CatalogosPublicos; 
+export default CatalogosPublicos;
