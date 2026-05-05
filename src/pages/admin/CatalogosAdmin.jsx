@@ -1,24 +1,122 @@
 import React, { useState, useEffect } from 'react';
-import catalogosService from '../../services/catalogosService';
 import Layout from '../../components/common/Layout';
-import { Plus, Edit2, Trash2, X, ExternalLink, FileText, Image as ImageIcon } from 'lucide-react';
+import catalogosService from '../../services/catalogosService';
+import { useAuthStore } from '../../store/authStore';
+import {
+  FileText, Plus, Search, Edit, Trash2, X, Link as LinkIcon,
+  ChevronDown, AlertCircle, CheckCircle, ExternalLink,
+  DollarSign, FileCheck, Shield, AlertTriangle, Image as ImageIcon
+} from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
+const initialFormData = {
+  titulo: '',
+  descripcion: '',
+  precio: '',
+  linkDrive: '',
+  activo: true
+};
+
+const ConfirmModal = ({ config, onClose }) => {
+  if (!config?.show) return null;
+  const isDanger  = config.variant === 'danger';
+  const isWarning = config.variant === 'warning';
+
+  const accentBg     = isDanger ? '#FEF2F2' : isWarning ? '#FFFBEB' : '#EEF4FF';
+  const accentBorder = isDanger ? '#FECACA' : isWarning ? '#FDE68A' : 'var(--border)';
+  const iconBg       = isDanger ? '#EF4444' : isWarning ? '#F59E0B' : 'var(--capyme-blue-mid)';
+  const titleColor   = isDanger ? '#B91C1C' : isWarning ? '#92400E' : 'var(--gray-900)';
+  const subtitleColor= isDanger ? '#DC2626' : isWarning ? '#B45309' : 'var(--gray-500)';
+  const btnBg        = isDanger
+    ? 'linear-gradient(135deg,#EF4444,#DC2626)'
+    : isWarning
+      ? 'linear-gradient(135deg,#F59E0B,#D97706)'
+      : 'linear-gradient(135deg,var(--capyme-blue-mid),var(--capyme-blue))';
+  const btnShadow    = isDanger
+    ? '0 2px 8px rgba(239,68,68,0.35)'
+    : isWarning
+      ? '0 2px 8px rgba(245,158,11,0.35)'
+      : '0 2px 8px rgba(31,78,158,0.28)';
+
+  return (
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', backdropFilter:'blur(4px)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1200, padding:'20px' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background:'#fff', borderRadius:'var(--radius-lg)', width:'100%', maxWidth:'440px', boxShadow:'0 24px 64px rgba(0,0,0,0.22)', overflow:'hidden', animation:'modalIn 0.22s ease both' }}>
+        <div style={{ background:accentBg, padding:'20px 24px', borderBottom:`1px solid ${accentBorder}`, display:'flex', alignItems:'center', gap:'14px' }}>
+          <div style={{ width:'44px', height:'44px', background:iconBg, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, boxShadow:`0 4px 12px ${iconBg}40` }}>
+            <AlertTriangle style={{ width:'22px', height:'22px', color:'#fff' }} />
+          </div>
+          <div>
+            <h3 style={{ fontSize:'17px', fontWeight:800, color:titleColor, fontFamily:"'Plus Jakarta Sans', sans-serif", margin:'0 0 2px' }}>
+              {config.title}
+            </h3>
+            <p style={{ fontSize:'13px', color:subtitleColor, margin:0, fontFamily:"'DM Sans', sans-serif", fontWeight:500 }}>
+              {config.subtitle || 'Esta acción puede revertirse más adelante'}
+            </p>
+          </div>
+        </div>
+        <div style={{ padding:'20px 24px' }}>
+          {config.message && (
+            <div style={{ background:'var(--gray-50)', border:'1px solid var(--border)', borderRadius:'var(--radius-md)', padding:'14px 16px', marginBottom:'20px' }}>
+              <p style={{ fontSize:'14px', color:'var(--gray-700)', margin:0, fontFamily:"'DM Sans', sans-serif", lineHeight:1.5 }}>
+                {config.message}
+              </p>
+            </div>
+          )}
+          <div style={{ display:'flex', gap:'10px', justifyContent:'flex-end' }}>
+            <button onClick={onClose} style={{ padding:'9px 18px', border:'1px solid var(--border)', borderRadius:'var(--radius-md)', background:'#fff', color:'var(--gray-700)', fontSize:'14px', fontWeight:600, fontFamily:"'DM Sans', sans-serif", cursor:'pointer', transition:'all 150ms ease' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-100)'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
+              Cancelar
+            </button>
+            <button onClick={() => { config.onConfirm(); onClose(); }} style={{ padding:'9px 22px', border:'none', borderRadius:'var(--radius-md)', background:btnBg, color:'#fff', fontSize:'14px', fontWeight:600, fontFamily:"'DM Sans', sans-serif", cursor:'pointer', boxShadow:btnShadow, transition:'all 150ms ease' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.9'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+              {config.confirmLabel || 'Confirmar'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SectionTitle = ({ icon: Icon, text }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '4px' }}>
+    <Icon style={{ width: '14px', height: '14px', color: 'var(--capyme-blue-mid)' }} />
+    <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--capyme-blue-mid)', textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      {text}
+    </span>
+    <div style={{ flex: 1, height: '1px', background: 'var(--border)', marginLeft: '4px' }} />
+  </div>
+);
+
+const ErrorMsg = ({ text }) => (
+  <p style={{ marginTop: '4px', fontSize: '12px', color: '#EF4444', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: "'DM Sans', sans-serif" }}>
+    <AlertCircle style={{ width: '12px', height: '12px' }} /> {text}
+  </p>
+);
+
 const CatalogosAdmin = () => {
-  const [pdfs, setPdfs] = useState([]);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [imagenArchivo, setImagenArchivo] = useState(null);
+  const { user } = useAuthStore();
   
-  const [formData, setFormData] = useState({ 
-    id: null, 
-    titulo: '', 
-    descripcion: '', 
-    precio: '', 
-    linkDrive: '',
-    activo: true 
-  });
+  const [pdfs, setPdfs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  
+  const [showModal, setShowModal] = useState(false);
+  const [modalMode, setModalMode] = useState('create');
+  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterEstado, setFilterEstado] = useState('');
+  const [hoveredRow, setHoveredRow] = useState(null);
+  
+  const [formData, setFormData] = useState(initialFormData);
+  const [imagenArchivo, setImagenArchivo] = useState(null);
+  const [formErrors, setFormErrors] = useState({});
+
+  const [confirmConfig, setConfirmConfig] = useState({ show: false });
+  const showConfirm = (cfg) => setConfirmConfig({ show: true, ...cfg });
+  const closeConfirm = () => setConfirmConfig({ show: false });
+
+  useEffect(() => {
+    fetchPdfs();
+  }, []);
 
   const fetchPdfs = async () => {
     try {
@@ -32,13 +130,59 @@ const CatalogosAdmin = () => {
     }
   };
 
-  useEffect(() => {
-    fetchPdfs();
-  }, []);
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.titulo.trim()) errors.titulo = 'El título es requerido';
+    if (!formData.descripcion.trim()) errors.descripcion = 'La descripción es requerida';
+    if (!formData.precio || isNaN(formData.precio) || formData.precio <= 0) {
+      errors.precio = 'Precio inválido';
+    }
+    if (!formData.linkDrive.trim()) {
+      errors.linkDrive = 'El enlace es requerido';
+    } else if (!formData.linkDrive.startsWith('http')) {
+      errors.linkDrive = 'El enlace debe empezar con http:// o https://';
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
-  const handleChange = (e) => {
-    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
-    setFormData({ ...formData, [e.target.name]: value });
+  const isFormValid = formData.titulo.trim() !== '' && 
+                      formData.descripcion.trim() !== '' && 
+                      formData.precio > 0 && 
+                      formData.linkDrive.trim() !== '';
+
+  const handleOpenModal = (mode, pdf = null) => {
+    setModalMode(mode);
+    setFormErrors({});
+    setImagenArchivo(null);
+    if (mode === 'edit' && pdf) {
+      setFormData({
+        id: pdf.id,
+        titulo: pdf.titulo || '',
+        descripcion: pdf.descripcion || '',
+        precio: pdf.precio || '',
+        linkDrive: pdf.linkDrive || '',
+        activo: pdf.activo !== undefined ? pdf.activo : true
+      });
+    } else {
+      setFormData({ ...initialFormData });
+    }
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setFormErrors({});
+    setImagenArchivo(null);
+    setFormData({ ...initialFormData });
+  };
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (formErrors[field]) {
+      setFormErrors(prev => ({ ...prev, [field]: undefined }));
+    }
   };
 
   const handleImageChange = (e) => {
@@ -49,72 +193,110 @@ const CatalogosAdmin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) return;
     try {
       setSubmitting(true);
-      const data = new FormData();
-      data.append('titulo', formData.titulo);
-      data.append('descripcion', formData.descripcion);
-      data.append('precio', formData.precio);
-      data.append('linkDrive', formData.linkDrive);
-      data.append('activo', formData.activo);
+      const submitData = new FormData();
+      submitData.append('titulo', formData.titulo);
+      submitData.append('descripcion', formData.descripcion);
+      submitData.append('precio', formData.precio);
+      submitData.append('linkDrive', formData.linkDrive);
+      submitData.append('activo', formData.activo);
       
       if (imagenArchivo) {
-        data.append('imagen', imagenArchivo);
+        submitData.append('imagen', imagenArchivo);
       }
 
-      if (formData.id) {
-        await catalogosService.actualizarPdf(formData.id, data);
-        toast.success('Catálogo actualizado');
+      if (modalMode === 'create') {
+        await catalogosService.crearPdf(submitData);
+        toast.success('Catálogo creado exitosamente');
       } else {
-        await catalogosService.crearPdf(data);
-        toast.success('Catálogo creado');
+        await catalogosService.actualizarPdf(formData.id, submitData);
+        toast.success('Catálogo actualizado exitosamente');
       }
-      cerrarModal();
+      handleCloseModal();
       fetchPdfs();
     } catch (error) {
-      toast.error('Error al guardar');
+      toast.error('Error al guardar el catálogo');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleEdit = (pdf) => {
-    setFormData({
-      id: pdf.id,
-      titulo: pdf.titulo,
-      descripcion: pdf.descripcion,
-      precio: pdf.precio,
-      linkDrive: pdf.linkDrive,
-      activo: pdf.activo
+  const handleToggleActivo = (pdf) => {
+    const desactivar = pdf.activo;
+    showConfirm({
+      variant: desactivar ? 'danger' : 'warning',
+      title: desactivar ? 'Desactivar catálogo' : 'Activar catálogo',
+      subtitle: desactivar
+        ? 'El catálogo no será visible para los clientes'
+        : 'El catálogo volverá a ser visible',
+      message: `¿Confirmas que deseas ${desactivar ? 'desactivar' : 'activar'} el archivo "${pdf.titulo}"?`,
+      confirmLabel: desactivar ? 'Sí, desactivar' : 'Sí, activar',
+      onConfirm: async () => {
+        try {
+          const submitData = new FormData();
+          submitData.append('titulo', pdf.titulo);
+          submitData.append('descripcion', pdf.descripcion);
+          submitData.append('precio', pdf.precio);
+          submitData.append('linkDrive', pdf.linkDrive);
+          submitData.append('activo', !pdf.activo);
+
+          await catalogosService.actualizarPdf(pdf.id, submitData);
+          toast.success(`Catálogo ${desactivar ? 'desactivado' : 'activado'} exitosamente`);
+          fetchPdfs();
+        } catch (error) {
+          toast.error('Error al cambiar el estado');
+        }
+      },
     });
-    setImagenArchivo(null);
-    setModalOpen(true);
   };
 
-  const handleDelete = async (id) => {
-    if(window.confirm('¿Estás seguro de que deseas desactivar este catálogo?')) {
-      try {
-        await catalogosService.eliminarPdf(id);
-        toast.success('Catálogo desactivado');
-        fetchPdfs();
-      } catch (error) {
-        toast.error('Error al desactivar');
-      }
-    }
+  const pdfsFiltrados = pdfs.filter(p => {
+    const matchesSearch = p.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          p.descripcion?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesEstado = filterEstado === '' ? true : p.activo.toString() === filterEstado;
+    return matchesSearch && matchesEstado;
+  });
+
+  const inputBaseStyle = {
+    width: '100%',
+    padding: '10px 12px',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-md)',
+    fontSize: '14px',
+    fontFamily: "'DM Sans', sans-serif",
+    color: 'var(--gray-900)',
+    background: '#fff',
+    outline: 'none',
+    transition: 'all 200ms ease',
   };
 
-  const cerrarModal = () => {
-    setModalOpen(false);
-    setImagenArchivo(null);
-    setFormData({ id: null, titulo: '', descripcion: '', precio: '', linkDrive: '', activo: true });
+  const inputWithIconStyle = { ...inputBaseStyle, paddingLeft: '38px' };
+  const inputErrorStyle = { borderColor: '#EF4444', boxShadow: '0 0 0 2px rgba(239,68,68,0.15)' };
+
+  const labelStyle = {
+    display: 'block',
+    fontSize: '13px',
+    fontWeight: 600,
+    color: 'var(--gray-600)',
+    marginBottom: '6px',
+    fontFamily: "'DM Sans', sans-serif",
+  };
+
+  const selectStyle = {
+    ...inputBaseStyle,
+    appearance: 'none',
+    paddingRight: '36px',
+    cursor: 'pointer',
   };
 
   if (loading) {
     return (
       <Layout>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-          <div className="w-10 h-10 border-4 border-[#EEF4FF] border-t-[#1F4E9E] rounded-full animate-spin"></div>
-          <p className="text-gray-500 font-medium">Cargando gestión...</p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '320px', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ width: '40px', height: '40px', border: '3px solid var(--border)', borderTopColor: 'var(--capyme-blue-mid)', borderRadius: '50%', animation: 'spin 700ms linear infinite' }} />
+          <p style={{ fontSize: '14px', color: 'var(--gray-400)', fontFamily: "'DM Sans', sans-serif" }}>Cargando catálogos...</p>
         </div>
       </Layout>
     );
@@ -122,79 +304,129 @@ const CatalogosAdmin = () => {
 
   return (
     <Layout>
-      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto min-h-screen">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-[#EEF4FF] text-[#1F4E9E] rounded-lg shadow-sm">
-              <FileText size={24} />
-            </div>
-            <div>
-              <h1 className="text-2xl font-display font-bold text-[#0F2A5A] tracking-tight">Gestión de Catálogos</h1>
-              <p className="text-sm text-gray-500 mt-1">Administra los archivos PDF, portadas y disponibilidad.</p>
-            </div>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes modalIn { from { opacity:0; transform:scale(0.96) translateY(8px); } to { opacity:1; transform:scale(1) translateY(0); } }
+      `}</style>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+          <div>
+            <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '26px', fontWeight: 800, color: 'var(--gray-900)', letterSpacing: '-0.02em', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <FileCheck style={{ width: '28px', height: '28px', color: 'var(--capyme-blue-mid)' }} />
+              Gestión de Catálogos
+            </h1>
+            <p style={{ fontSize: '14px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif" }}>
+              {pdfsFiltrados.length} catálogo{pdfsFiltrados.length !== 1 ? 's' : ''} registrado{pdfsFiltrados.length !== 1 ? 's' : ''}
+            </p>
           </div>
-          <button onClick={() => setModalOpen(true)} className="flex items-center gap-2 bg-[#1F4E9E] text-white px-5 py-2.5 rounded-lg hover:bg-[#2B5BA6] transition-all font-medium shadow-md active:scale-95">
-            <Plus size={18} />
-            <span>Agregar PDF</span>
+          <button
+            onClick={() => handleOpenModal('create')}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '14px', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 8px rgba(31,78,158,0.28)', transition: 'all 200ms ease', whiteSpace: 'nowrap' }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            <Plus style={{ width: '16px', height: '16px' }} />
+            Nuevo Catálogo
           </button>
         </div>
 
-        <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-100">
-              <thead className="bg-[#EEF4FF]/50">
-                <tr>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-display font-bold text-[#0F2A5A] uppercase tracking-wider w-16">Portada</th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-display font-bold text-[#0F2A5A] uppercase tracking-wider">Título</th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-display font-bold text-[#0F2A5A] uppercase tracking-wider">Precio</th>
-                  <th scope="col" className="px-6 py-4 text-left text-xs font-display font-bold text-[#0F2A5A] uppercase tracking-wider">Estado</th>
-                  <th scope="col" className="px-6 py-4 text-right text-xs font-display font-bold text-[#0F2A5A] uppercase tracking-wider">Acciones</th>
+        <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px', alignItems: 'center' }}>
+            <div style={{ position: 'relative' }}>
+              <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: 'var(--gray-400)', pointerEvents: 'none' }} />
+              <input type="text" placeholder="Buscar por título o descripción..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={inputWithIconStyle} onFocus={e => { e.target.style.borderColor = 'var(--capyme-blue-mid)'; e.target.style.boxShadow = '0 0 0 3px rgba(43,91,166,0.12)'; }} onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }} />
+            </div>
+            <div style={{ position: 'relative' }}>
+              <select value={filterEstado} onChange={(e) => setFilterEstado(e.target.value)} style={selectStyle}>
+                <option value="">Todos los estados</option>
+                <option value="true">Activos</option>
+                <option value="false">Inactivos</option>
+              </select>
+              <ChevronDown style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: 'var(--gray-400)', pointerEvents: 'none' }} />
+            </div>
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: 'var(--gray-50)' }}>
+                  {['Portada', 'Título', 'Precio', 'Enlace', 'Estado', 'Acciones'].map((h, i) => (
+                    <th key={h} style={{ padding: '14px 24px', textAlign: i === 5 ? 'right' : 'left', fontSize: '11px', fontWeight: 700, color: 'var(--gray-500)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'Plus Jakarta Sans', sans-serif", borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50 bg-white">
-                {pdfs.length > 0 ? (
-                  pdfs.map((pdf) => (
-                    <tr key={pdf.id} className="hover:bg-[#EEF4FF]/40 transition-colors">
-                      <td className="px-6 py-4">
-                        {pdf.imagenUrl ? (
-                          <img src={pdf.imagenUrl} alt="portada" className="w-12 h-12 object-cover rounded-md border border-gray-200" />
-                        ) : (
-                          <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center text-gray-400">
-                            <ImageIcon size={20} />
+              <tbody>
+                {pdfsFiltrados.length > 0 ? (
+                  pdfsFiltrados.map((pdf) => {
+                    return (
+                      <tr
+                        key={pdf.id}
+                        onMouseEnter={() => setHoveredRow(pdf.id)}
+                        onMouseLeave={() => setHoveredRow(null)}
+                        style={{ borderBottom: '1px solid var(--border)', transition: 'background 150ms ease', background: hoveredRow === pdf.id ? 'var(--gray-50)' : 'transparent' }}
+                      >
+                        <td style={{ padding: '14px 24px' }}>
+                          {pdf.imagenUrl ? (
+                            <img src={pdf.imagenUrl} alt="portada" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }} />
+                          ) : (
+                            <div style={{ width: '40px', height: '40px', background: 'var(--gray-100)', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)' }}>
+                              <ImageIcon style={{ width: '20px', height: '20px', color: 'var(--gray-400)' }} />
+                            </div>
+                          )}
+                        </td>
+                        <td style={{ padding: '14px 24px' }}>
+                          <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--gray-800)', fontFamily: "'DM Sans', sans-serif" }}>
+                            {pdf.titulo}
+                          </p>
+                          <p style={{ fontSize: '12px', color: 'var(--gray-500)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '250px' }}>
+                            {pdf.descripcion}
+                          </p>
+                        </td>
+                        <td style={{ padding: '14px 24px' }}>
+                          <p style={{ fontSize: '13px', fontWeight: 800, color: 'var(--capyme-blue-mid)', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                             ${Number(pdf.precio).toFixed(2)}
+                          </p>
+                        </td>
+                        <td style={{ padding: '14px 24px' }}>
+                          <a href={pdf.linkDrive} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", color: 'var(--capyme-blue-mid)', textDecoration: 'none', background: 'var(--capyme-blue-pale)', padding: '4px 8px', borderRadius: '4px' }}>
+                            Ver Drive <ExternalLink style={{ width: '11px', height: '11px' }} />
+                          </a>
+                        </td>
+                        <td style={{ padding: '14px 24px' }}>
+                          <span style={{ display: 'inline-block', padding: '3px 10px', background: pdf.activo ? '#F0FDF4' : '#FEF2F2', color: pdf.activo ? '#16A34A' : '#DC2626', borderRadius: 'var(--radius-sm)', fontSize: '11px', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                            {pdf.activo ? 'Activo' : 'Inactivo'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '14px 24px', textAlign: 'right' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
+                            <button onClick={() => handleOpenModal('edit', pdf)} title="Editar" style={{ width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', borderRadius: 'var(--radius-sm)', background: 'transparent', cursor: 'pointer', color: 'var(--gray-400)', transition: 'all 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.background = '#EEF4FF'; e.currentTarget.style.color = 'var(--capyme-blue-mid)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-400)'; }}>
+                              <Edit style={{ width: '16px', height: '16px' }} />
+                            </button>
+
+                            {pdf.activo ? (
+                              <button onClick={() => handleToggleActivo(pdf)} title="Desactivar catálogo" style={{ width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', borderRadius: 'var(--radius-sm)', background: 'transparent', cursor: 'pointer', color: 'var(--gray-400)', transition: 'all 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.background = '#FEF2F2'; e.currentTarget.style.color = '#DC2626'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-400)'; }}>
+                                <Trash2 style={{ width: '16px', height: '16px' }} />
+                              </button>
+                            ) : (
+                              <button onClick={() => handleToggleActivo(pdf)} title="Activar catálogo" style={{ width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', borderRadius: 'var(--radius-sm)', background: 'transparent', cursor: 'pointer', color: 'var(--gray-400)', transition: 'all 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.background = '#ECFDF5'; e.currentTarget.style.color = '#065F46'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-400)'; }}>
+                                <CheckCircle style={{ width: '16px', height: '16px' }} />
+                              </button>
+                            )}
                           </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-bold text-[#0F2A5A]">{pdf.titulo}</div>
-                        <div className="text-sm text-gray-500 line-clamp-1 mt-0.5 max-w-xs">{pdf.descripcion}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-display font-black text-[#1F4E9E]">${pdf.precio}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-3 py-1 inline-flex text-xs font-display font-bold rounded-full ${pdf.activo ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>
-                          {pdf.activo ? 'Activo' : 'Inactivo'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end gap-2">
-                          <button onClick={() => handleEdit(pdf)} className="text-gray-400 hover:text-[#1F4E9E] bg-gray-50 hover:bg-[#EEF4FF] p-2 rounded-lg transition-colors" title="Editar">
-                            <Edit2 size={18} />
-                          </button>
-                          <button onClick={() => handleDelete(pdf.id)} className="text-gray-400 hover:text-red-600 bg-gray-50 hover:bg-red-50 p-2 rounded-lg transition-colors" title="Desactivar">
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                        </td>
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr>
-                    <td colSpan="5" className="px-6 py-16 text-center">
-                      <div className="flex flex-col items-center justify-center text-gray-400">
-                        <FileText size={48} className="mb-4 opacity-40 text-[#1F4E9E]" />
-                        <p className="text-lg font-display font-medium text-[#0F2A5A]">No hay catálogos registrados</p>
-                      </div>
+                    <td colSpan="6" style={{ padding: '60px 24px', textAlign: 'center' }}>
+                      <FileText style={{ width: '40px', height: '40px', color: 'var(--gray-200)', margin: '0 auto 12px' }} />
+                      <p style={{ fontSize: '14px', color: 'var(--gray-400)', fontWeight: 500 }}>No se encontraron catálogos</p>
+                      <p style={{ fontSize: '12px', color: 'var(--gray-300)', marginTop: '4px' }}>Intenta ajustar la búsqueda o crea uno nuevo</p>
                     </td>
                   </tr>
                 )}
@@ -202,116 +434,103 @@ const CatalogosAdmin = () => {
             </table>
           </div>
         </div>
+      </div>
 
-        {modalOpen && (
-          <div className="fixed inset-0 bg-[#0F2A5A]/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
-              <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-[#EEF4FF]/50 flex-shrink-0">
-                <h2 className="text-lg font-display font-bold text-[#0F2A5A] flex items-center gap-2">
-                  {formData.id ? <Edit2 size={20} className="text-[#1F4E9E]" /> : <Plus size={20} className="text-[#1F4E9E]" />}
-                  {formData.id ? 'Editar Catálogo PDF' : 'Agregar Nuevo PDF'}
+      {showModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '16px' }}>
+          <div style={{ background: '#fff', borderRadius: 'var(--radius-lg)', maxWidth: '600px', width: '100%', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflow: 'hidden', animation: 'modalIn 0.25s ease both' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--border)', background: 'var(--gray-50)' }}>
+              <div>
+                <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '18px', fontWeight: 800, color: 'var(--gray-900)', letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {modalMode === 'create' ? <Plus style={{ color: 'var(--capyme-blue-mid)' }} size={20} /> : <Edit style={{ color: 'var(--capyme-blue-mid)' }} size={20} />}
+                  {modalMode === 'create' ? 'Nuevo Catálogo' : 'Editar Catálogo'}
                 </h2>
-                <button onClick={cerrarModal} className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors">
-                  <X size={20} />
-                </button>
+                <p style={{ fontSize: '13px', color: 'var(--gray-400)', marginTop: '2px', fontFamily: "'DM Sans', sans-serif" }}>
+                  {modalMode === 'create' ? 'Registra un nuevo PDF para la venta pública' : `Editando: ${formData.titulo}`}
+                </p>
               </div>
-              
-              <div className="p-6 overflow-y-auto flex-grow">
-                <form id="catalogoForm" onSubmit={handleSubmit} className="space-y-5">
+              <button onClick={handleCloseModal} style={{ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', borderRadius: 'var(--radius-sm)', background: 'transparent', cursor: 'pointer', color: 'var(--gray-400)', transition: 'all 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-100)'; e.currentTarget.style.color = 'var(--gray-600)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-400)'; }}>
+                <X style={{ width: '20px', height: '20px' }} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} style={{ overflowY: 'auto', flex: 1, padding: '24px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+                <SectionTitle icon={FileText} text="Información del Catálogo" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   
                   <div>
-                    <label className="block text-sm font-bold text-[#0F2A5A] mb-1.5">Portada (Imagen)</label>
-                    <input 
-                      type="file" 
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="w-full border border-gray-200 px-4 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F4E9E]/20 text-sm text-gray-600 bg-gray-50/50 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#EEF4FF] file:text-[#1F4E9E] hover:file:bg-[#dbeafe]" 
-                    />
-                    {formData.id && !imagenArchivo && <p className="text-xs text-gray-400 mt-1">Deja vacío para mantener la imagen actual.</p>}
+                    <label style={labelStyle}>Portada (Imagen)</label>
+                    <input type="file" accept="image/*" onChange={handleImageChange} style={{ ...inputBaseStyle, padding: '8px 12px' }} />
+                    {modalMode === 'edit' && !imagenArchivo && <p style={{ marginTop:'4px',fontSize:'11px',color:'var(--gray-400)',fontFamily:"'DM Sans',sans-serif" }}>Deja vacío para mantener la imagen actual.</p>}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-[#0F2A5A] mb-1.5">Título del PDF</label>
-                    <input 
-                      type="text" 
-                      name="titulo" 
-                      value={formData.titulo} 
-                      onChange={handleChange} 
-                      className="w-full border border-gray-200 px-4 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F4E9E]/20 focus:border-[#1F4E9E] text-sm text-gray-800 bg-gray-50/50" 
-                      required 
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-bold text-[#0F2A5A] mb-1.5">Descripción</label>
-                    <textarea 
-                      name="descripcion" 
-                      value={formData.descripcion} 
-                      onChange={handleChange} 
-                      rows="3"
-                      className="w-full border border-gray-200 px-4 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F4E9E]/20 focus:border-[#1F4E9E] text-sm resize-none text-gray-800 bg-gray-50/50" 
-                      required 
-                    />
+                    <label style={labelStyle}>Título del PDF *</label>
+                    <input type="text" value={formData.titulo} onChange={(e) => handleChange('titulo', e.target.value)} placeholder="Ej. Curso Básico de Negocios" style={{ ...inputBaseStyle, ...(formErrors.titulo ? inputErrorStyle : {}) }} onFocus={e => { if (!formErrors.titulo) { e.target.style.borderColor = 'var(--capyme-blue-mid)'; e.target.style.boxShadow = '0 0 0 3px rgba(43,91,166,0.12)'; } }} onBlur={e => { if (!formErrors.titulo) { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; } }} />
+                    {formErrors.titulo && <ErrorMsg text={formErrors.titulo} />}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-[#0F2A5A] mb-1.5">Precio (MXN)</label>
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-display font-bold">$</span>
-                      <input 
-                        type="number" 
-                        step="0.01" 
-                        name="precio" 
-                        value={formData.precio} 
-                        onChange={handleChange} 
-                        className="w-full border border-gray-200 pl-8 pr-4 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F4E9E]/20 focus:border-[#1F4E9E] text-sm text-gray-800 font-medium bg-gray-50/50" 
-                        required 
-                      />
+                    <label style={labelStyle}>Descripción *</label>
+                    <textarea value={formData.descripcion} rows="3" onChange={(e) => handleChange('descripcion', e.target.value)} placeholder="Detalles de lo que incluye el archivo..." style={{ ...inputBaseStyle, resize: 'none', ...(formErrors.descripcion ? inputErrorStyle : {}) }} onFocus={e => { if (!formErrors.descripcion) { e.target.style.borderColor = 'var(--capyme-blue-mid)'; e.target.style.boxShadow = '0 0 0 3px rgba(43,91,166,0.12)'; } }} onBlur={e => { if (!formErrors.descripcion) { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; } }} />
+                    {formErrors.descripcion && <ErrorMsg text={formErrors.descripcion} />}
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px' }}>
+                    <div>
+                      <label style={labelStyle}>Precio (MXN) *</label>
+                      <div style={{ position: 'relative' }}>
+                        <DollarSign style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: 'var(--gray-400)', pointerEvents: 'none' }} />
+                        <input type="number" step="0.01" value={formData.precio} onChange={(e) => handleChange('precio', e.target.value)} placeholder="0.00" style={{ ...inputWithIconStyle, fontWeight: 700, ...(formErrors.precio ? inputErrorStyle : {}) }} onFocus={e => { if (!formErrors.precio) { e.target.style.borderColor = 'var(--capyme-blue-mid)'; e.target.style.boxShadow = '0 0 0 3px rgba(43,91,166,0.12)'; } }} onBlur={e => { if (!formErrors.precio) { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; } }} />
+                      </div>
+                      {formErrors.precio && <ErrorMsg text={formErrors.precio} />}
+                    </div>
+
+                    <div>
+                      <label style={labelStyle}>Enlace de Google Drive *</label>
+                      <div style={{ position: 'relative' }}>
+                        <LinkIcon style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: 'var(--gray-400)', pointerEvents: 'none' }} />
+                        <input type="url" value={formData.linkDrive} onChange={(e) => handleChange('linkDrive', e.target.value)} placeholder="https://drive.google.com/..." style={{ ...inputWithIconStyle, color: 'var(--capyme-blue-mid)', ...(formErrors.linkDrive ? inputErrorStyle : {}) }} onFocus={e => { if (!formErrors.linkDrive) { e.target.style.borderColor = 'var(--capyme-blue-mid)'; e.target.style.boxShadow = '0 0 0 3px rgba(43,91,166,0.12)'; } }} onBlur={e => { if (!formErrors.linkDrive) { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; } }} />
+                      </div>
+                      {formErrors.linkDrive && <ErrorMsg text={formErrors.linkDrive} />}
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-bold text-[#0F2A5A] mb-1.5">Enlace de Google Drive</label>
-                    <input 
-                      type="url" 
-                      name="linkDrive" 
-                      value={formData.linkDrive} 
-                      onChange={handleChange} 
-                      className="w-full border border-gray-200 px-4 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1F4E9E]/20 focus:border-[#1F4E9E] text-sm text-[#4A9AFF] bg-gray-50/50" 
-                      required 
-                    />
-                  </div>
-
-                  {formData.id && (
-                    <div className="flex items-center gap-3 mt-2 p-3 bg-[#EEF4FF]/50 rounded-lg border border-[#EEF4FF]">
+                  {modalMode === 'edit' && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', padding: '12px', background: 'var(--capyme-blue-pale)', borderRadius: 'var(--radius-md)' }}>
                       <input 
                         type="checkbox" 
                         id="activo" 
-                        name="activo" 
                         checked={formData.activo} 
-                        onChange={handleChange}
-                        className="w-4 h-4 text-[#1F4E9E] border-gray-300 rounded focus:ring-[#1F4E9E] cursor-pointer"
+                        onChange={(e) => handleChange('activo', e.target.checked)}
+                        style={{ width: '16px', height: '16px', accentColor: 'var(--capyme-blue-mid)', cursor: 'pointer' }}
                       />
-                      <label htmlFor="activo" className="text-sm font-display font-bold text-[#0F2A5A] cursor-pointer select-none">
-                        Hacer este catálogo visible al público
+                      <label htmlFor="activo" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--capyme-dark)', cursor: 'pointer', userSelect: 'none' }}>
+                        Catálogo visible en la tienda pública
                       </label>
                     </div>
                   )}
-                </form>
-              </div>
 
-              <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 flex-shrink-0 bg-white">
-                <button type="button" onClick={cerrarModal} className="px-5 py-2.5 text-sm font-bold text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                  Cancelar
-                </button>
-                <button type="submit" form="catalogoForm" disabled={submitting} className="px-5 py-2.5 text-sm font-bold text-white bg-[#1F4E9E] rounded-lg hover:bg-[#0F2A5A] shadow-sm hover:shadow transition-all disabled:opacity-50 flex items-center justify-center min-w-[140px]">
-                  {submitting ? 'Subiendo...' : (formData.id ? 'Guardar Cambios' : 'Crear Catálogo')}
-                </button>
+                </div>
               </div>
+            </form>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px', padding: '16px 24px', borderTop: '1px solid var(--border)', background: 'var(--gray-50)' }}>
+              <button type="button" onClick={handleCloseModal} disabled={submitting} style={{ padding: '10px 20px', fontSize: '14px', fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--gray-600)', background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.5 : 1, transition: 'all 150ms ease' }} onMouseEnter={e => { if (!submitting) e.currentTarget.style.background = 'var(--gray-50)'; }} onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
+                Cancelar
+              </button>
+              <button type="submit" onClick={handleSubmit} disabled={submitting || Object.keys(formErrors).length > 0 || !isFormValid} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 24px', fontSize: '14px', fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif", color: '#fff', background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', border: 'none', borderRadius: 'var(--radius-md)', cursor: submitting || Object.keys(formErrors).length > 0 || !isFormValid ? 'not-allowed' : 'pointer', opacity: submitting || Object.keys(formErrors).length > 0 || !isFormValid ? 0.6 : 1, boxShadow: '0 2px 8px rgba(31,78,158,0.28)', transition: 'all 200ms ease' }} onMouseEnter={e => { if (!submitting && isFormValid && Object.keys(formErrors).length === 0) e.currentTarget.style.transform = 'translateY(-1px)'; }} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                {submitting && <div style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 700ms linear infinite' }} />}
+                {modalMode === 'create' ? 'Crear Catálogo' : 'Guardar Cambios'}
+              </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      <ConfirmModal config={confirmConfig} onClose={closeConfirm} />
     </Layout>
   );
 };
