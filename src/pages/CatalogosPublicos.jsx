@@ -9,11 +9,10 @@ const CatalogosPublicos = () => {
   const [pdfs, setPdfs] = useState([]);
   const [selectedPdf, setSelectedPdf] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [hoveredRow, setHoveredRow] = useState(null);
 
   const location = useLocation();
   const navigate = useNavigate();
-  const [descargaEstado, setDescargaEstado] = useState(null); // 'procesando' | 'completado' | 'error'
+  const [descargaEstado, setDescargaEstado] = useState(null); 
   const [mensajeError, setMensajeError] = useState('');
   const descargaIniciada = useRef(false);
 
@@ -28,7 +27,7 @@ const CatalogosPublicos = () => {
       const data = await catalogosService.obtenerPublicos();
       setPdfs(data);
     } catch (error) {
-      console.error('Error al obtener los catálogos:', error);
+      console.error('Error al obtener los catálogos públicos:', error);
     } finally {
       setLoading(false);
     }
@@ -63,7 +62,6 @@ const CatalogosPublicos = () => {
         let linkDescarga = data.linkDrive;
         if (fileId) linkDescarga = `https://drive.google.com/uc?export=download&id=${fileId}`;
 
-        // Forzar descarga oculta
         const linkElement = document.createElement('a');
         linkElement.href = linkDescarga;
         linkElement.setAttribute('download', `${data.titulo || 'Catalogo_CAPYME'}.pdf`); 
@@ -101,13 +99,10 @@ const CatalogosPublicos = () => {
         .catalogo-modal{animation:modalIn 0.25s ease both;}
       `}</style>
 
-      {/* Navbar Público Minimalista */}
+      {/* Navbar Público Minimalista (Solo el Logo Centrado) */}
       <header style={{ background: '#fff', borderBottom: '1px solid var(--border)', padding: '16px 24px', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <img src={LogoCapyme} alt="CAPYME" style={{ height: '36px', objectFit: 'contain' }} />
-          <button onClick={() => navigate('/login')} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--capyme-blue-mid)', color: 'var(--capyme-blue-mid)', borderRadius: 'var(--radius-md)', fontWeight: 700, cursor: 'pointer', transition: 'all 150ms' }} onMouseEnter={e => {e.currentTarget.style.background = 'var(--capyme-blue-pale)'}} onMouseLeave={e => {e.currentTarget.style.background = 'transparent'}}>
-            Iniciar Sesión
-          </button>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <img src={LogoCapyme} alt="CAPYME" style={{ height: '38px', objectFit: 'contain' }} />
         </div>
       </header>
 
@@ -119,7 +114,7 @@ const CatalogosPublicos = () => {
             Catálogo de <span style={{ color: 'var(--capyme-blue-mid)' }}>PDFs Exclusivos</span>
           </h1>
           <p style={{ fontSize: '16px', color: 'var(--gray-500)', maxWidth: '600px', margin: '0 auto', lineHeight: 1.6 }}>
-            Adquiere material digital y herramientas prácticas para potenciar tu negocio al instante. Sin necesidad de registrarte.
+            Adquiere material digital y herramientas prácticas para potenciar tu negocio al instante.
           </p>
         </div>
 
@@ -270,7 +265,7 @@ const CatalogosPublicos = () => {
                     onClick={() => setSelectedPdf(null)} 
                     onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-100)'; }}
                     onMouseLeave={e => { e.currentTarget.style.background = '#fff'; }}
-                    style={{ width: '100%', padding: '14px', background: '#fff', border: '1px solid var(--border)', color: 'var(--gray-600)', borderRadius: 'var(--radius-md)', fontSize: '14px', fontWeight: 700, cursor: 'pointer', transition: 'all 150ms ease' }}
+                    style={{ width: '100%', padding: '14px', background: '#fff', border: '1px solid var(--border)', color: 'var(--gray-600)', borderRadius: 'var(--radius-md)', fontSize: '14px', fontWeight: 700, fontFamily: "'DM Sans', sans-serif", cursor: 'pointer', transition: 'all 150ms ease' }}
                   >
                     Cancelar
                   </button>
@@ -285,3 +280,4 @@ const CatalogosPublicos = () => {
 };
 
 export default CatalogosPublicos;
+```</Layout>
