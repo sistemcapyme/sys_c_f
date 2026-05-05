@@ -5,7 +5,7 @@ import { useAuthStore } from '../../store/authStore';
 import {
   FileText, Plus, Search, Edit, Trash2, X, Link as LinkIcon,
   ChevronDown, AlertCircle, CheckCircle, ExternalLink,
-  DollarSign, FileCheck, Shield, AlertTriangle, Image as ImageIcon
+  DollarSign, FileCheck, Shield, AlertTriangle, Image as ImageIcon, UploadCloud
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -108,6 +108,7 @@ const CatalogosAdmin = () => {
   
   const [formData, setFormData] = useState(initialFormData);
   const [imagenArchivo, setImagenArchivo] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [formErrors, setFormErrors] = useState({});
 
   const [confirmConfig, setConfirmConfig] = useState({ show: false });
@@ -156,6 +157,8 @@ const CatalogosAdmin = () => {
     setModalMode(mode);
     setFormErrors({});
     setImagenArchivo(null);
+    setPreviewUrl(null);
+    
     if (mode === 'edit' && pdf) {
       setFormData({
         id: pdf.id,
@@ -165,6 +168,9 @@ const CatalogosAdmin = () => {
         linkDrive: pdf.linkDrive || '',
         activo: pdf.activo !== undefined ? pdf.activo : true
       });
+      if (pdf.imagenUrl) {
+        setPreviewUrl(pdf.imagenUrl);
+      }
     } else {
       setFormData({ ...initialFormData });
     }
@@ -175,6 +181,7 @@ const CatalogosAdmin = () => {
     setShowModal(false);
     setFormErrors({});
     setImagenArchivo(null);
+    setPreviewUrl(null);
     setFormData({ ...initialFormData });
   };
 
@@ -187,7 +194,9 @@ const CatalogosAdmin = () => {
 
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      setImagenArchivo(e.target.files[0]);
+      const file = e.target.files[0];
+      setImagenArchivo(file);
+      setPreviewUrl(URL.createObjectURL(file));
     }
   };
 
@@ -371,9 +380,9 @@ const CatalogosAdmin = () => {
                       >
                         <td style={{ padding: '14px 24px' }}>
                           {pdf.imagenUrl ? (
-                            <img src={pdf.imagenUrl} alt="portada" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }} />
+                            <img src={pdf.imagenUrl} alt="portada" style={{ width: '44px', height: '44px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }} />
                           ) : (
-                            <div style={{ width: '40px', height: '40px', background: 'var(--gray-100)', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)' }}>
+                            <div style={{ width: '44px', height: '44px', background: 'var(--gray-100)', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)' }}>
                               <ImageIcon style={{ width: '20px', height: '20px', color: 'var(--gray-400)' }} />
                             </div>
                           )}
@@ -397,7 +406,7 @@ const CatalogosAdmin = () => {
                           </a>
                         </td>
                         <td style={{ padding: '14px 24px' }}>
-                          <span style={{ display: 'inline-block', padding: '3px 10px', background: pdf.activo ? '#F0FDF4' : '#FEF2F2', color: pdf.activo ? '#16A34A' : '#DC2626', borderRadius: 'var(--radius-sm)', fontSize: '11px', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                          <span style={{ display: 'inline-block', padding: '3px 10px', background: pdf.activo ? '#ECFDF5' : '#FEF2F2', color: pdf.activo ? '#065F46' : '#DC2626', borderRadius: 'var(--radius-sm)', fontSize: '11px', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                             {pdf.activo ? 'Activo' : 'Inactivo'}
                           </span>
                         </td>
@@ -454,18 +463,43 @@ const CatalogosAdmin = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} style={{ overflowY: 'auto', flex: 1, padding: '24px' }}>
+            <form id="catalogoForm" onSubmit={handleSubmit} style={{ overflowY: 'auto', flex: 1, padding: '24px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+                <SectionTitle icon={ImageIcon} text="Apariencia Visual" />
+                <div>
+                  <label style={labelStyle}>Portada del Catálogo</label>
+                  <div style={{ border: '2px dashed var(--border)', borderRadius: 'var(--radius-md)', padding: previewUrl ? '4px' : '32px', textAlign: 'center', position: 'relative', background: 'var(--gray-50)', transition: 'all 200ms ease' }}>
+                    {previewUrl ? (
+                      <div style={{ position: 'relative', width: '100%', height: '180px', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+                        <img src={previewUrl} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <div 
+                          style={{ position: 'absolute', inset: 0, background: 'rgba(15,42,90,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 200ms ease', cursor: 'pointer' }} 
+                          onMouseEnter={e => e.currentTarget.style.opacity = 1} 
+                          onMouseLeave={e => e.currentTarget.style.opacity = 0}
+                        >
+                           <label style={{ cursor: 'pointer', background: '#fff', color: 'var(--capyme-dark)', padding: '8px 16px', borderRadius: 'var(--radius-sm)', fontSize: '13px', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", display: 'flex', alignItems: 'center', gap: '6px' }}>
+                             <UploadCloud size={16} /> Cambiar Portada
+                             <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
+                           </label>
+                        </div>
+                      </div>
+                    ) : (
+                      <label style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '48px', height: '48px', background: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--shadow-sm)', color: 'var(--capyme-blue-mid)' }}>
+                          <UploadCloud style={{ width: '24px', height: '24px' }} />
+                        </div>
+                        <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--capyme-blue-mid)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Haz clic para subir una imagen</span>
+                        <span style={{ fontSize: '12px', color: 'var(--gray-400)', fontFamily: "'DM Sans', sans-serif" }}>PNG, JPG o WEBP (Recomendado 800x600px)</span>
+                        <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
+                      </label>
+                    )}
+                  </div>
+                </div>
 
                 <SectionTitle icon={FileText} text="Información del Catálogo" />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   
-                  <div>
-                    <label style={labelStyle}>Portada (Imagen)</label>
-                    <input type="file" accept="image/*" onChange={handleImageChange} style={{ ...inputBaseStyle, padding: '8px 12px' }} />
-                    {modalMode === 'edit' && !imagenArchivo && <p style={{ marginTop:'4px',fontSize:'11px',color:'var(--gray-400)',fontFamily:"'DM Sans',sans-serif" }}>Deja vacío para mantener la imagen actual.</p>}
-                  </div>
-
                   <div>
                     <label style={labelStyle}>Título del PDF *</label>
                     <input type="text" value={formData.titulo} onChange={(e) => handleChange('titulo', e.target.value)} placeholder="Ej. Curso Básico de Negocios" style={{ ...inputBaseStyle, ...(formErrors.titulo ? inputErrorStyle : {}) }} onFocus={e => { if (!formErrors.titulo) { e.target.style.borderColor = 'var(--capyme-blue-mid)'; e.target.style.boxShadow = '0 0 0 3px rgba(43,91,166,0.12)'; } }} onBlur={e => { if (!formErrors.titulo) { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; } }} />
@@ -517,11 +551,11 @@ const CatalogosAdmin = () => {
               </div>
             </form>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px', padding: '16px 24px', borderTop: '1px solid var(--border)', background: 'var(--gray-50)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px', padding: '16px 24px', borderTop: '1px solid var(--border)', background: 'var(--gray-50)', flexShrink: 0 }}>
               <button type="button" onClick={handleCloseModal} disabled={submitting} style={{ padding: '10px 20px', fontSize: '14px', fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--gray-600)', background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.5 : 1, transition: 'all 150ms ease' }} onMouseEnter={e => { if (!submitting) e.currentTarget.style.background = 'var(--gray-50)'; }} onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
                 Cancelar
               </button>
-              <button type="submit" onClick={handleSubmit} disabled={submitting || Object.keys(formErrors).length > 0 || !isFormValid} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 24px', fontSize: '14px', fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif", color: '#fff', background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', border: 'none', borderRadius: 'var(--radius-md)', cursor: submitting || Object.keys(formErrors).length > 0 || !isFormValid ? 'not-allowed' : 'pointer', opacity: submitting || Object.keys(formErrors).length > 0 || !isFormValid ? 0.6 : 1, boxShadow: '0 2px 8px rgba(31,78,158,0.28)', transition: 'all 200ms ease' }} onMouseEnter={e => { if (!submitting && isFormValid && Object.keys(formErrors).length === 0) e.currentTarget.style.transform = 'translateY(-1px)'; }} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+              <button type="submit" form="catalogoForm" disabled={submitting || Object.keys(formErrors).length > 0 || !isFormValid} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 24px', fontSize: '14px', fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif", color: '#fff', background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', border: 'none', borderRadius: 'var(--radius-md)', cursor: submitting || Object.keys(formErrors).length > 0 || !isFormValid ? 'not-allowed' : 'pointer', opacity: submitting || Object.keys(formErrors).length > 0 || !isFormValid ? 0.6 : 1, boxShadow: '0 2px 8px rgba(31,78,158,0.28)', transition: 'all 200ms ease' }} onMouseEnter={e => { if (!submitting && isFormValid && Object.keys(formErrors).length === 0) e.currentTarget.style.transform = 'translateY(-1px)'; }} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
                 {submitting && <div style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 700ms linear infinite' }} />}
                 {modalMode === 'create' ? 'Crear Catálogo' : 'Guardar Cambios'}
               </button>

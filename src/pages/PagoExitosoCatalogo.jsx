@@ -1,13 +1,15 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import catalogosService from '../services/catalogosService';
+import { CheckCircle, Download, Loader2, AlertCircle } from 'lucide-react';
+import LogoCapyme from '../assets/LogoCapyme.png';
 
 const PagoExitosoCatalogo = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [estado, setEstado] = useState('procesando');
+  const [estado, setEstado] = useState('procesando'); 
   const [mensajeError, setMensajeError] = useState('');
-  const [countdown, setCountdown] = useState(5);
+  const [contador, setContador] = useState(5);
   const descargaIniciada = useRef(false);
 
   const extraerIdDrive = (url) => {
@@ -44,7 +46,7 @@ const PagoExitosoCatalogo = () => {
 
         const linkElement = document.createElement('a');
         linkElement.href = linkDescarga;
-        linkElement.setAttribute('download', `${data.titulo || 'Catalogo'}.pdf`); 
+        linkElement.setAttribute('download', `${data.titulo || 'Catalogo_CAPYME'}.pdf`); 
         linkElement.style.display = 'none';
         document.body.appendChild(linkElement);
         linkElement.click();
@@ -65,7 +67,7 @@ const PagoExitosoCatalogo = () => {
     let tiempoRestante = 5;
     const intervalo = setInterval(() => {
       tiempoRestante -= 1;
-      setCountdown(tiempoRestante);
+      setContador(tiempoRestante);
       if (tiempoRestante <= 0) {
         clearInterval(intervalo);
         navigate('/catalogos');
@@ -74,64 +76,76 @@ const PagoExitosoCatalogo = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
-      <div className="bg-white p-8 rounded-lg shadow-lg text-center max-w-md w-full">
-        
-        {estado === 'procesando' && (
-          <>
-            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-10 h-10 text-blue-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
+    <div style={{ minHeight: '100vh', background: 'var(--gray-50)', fontFamily: "'DM Sans', sans-serif" }}>
+      <style>{`
+        @keyframes modalIn{from{opacity:0;transform:scale(0.96) translateY(8px);}to{opacity:1;transform:scale(1) translateY(0);}}
+        @keyframes spin{to{transform:rotate(360deg);}}
+        @keyframes pulseSoft{0%,100%{opacity:1;}50%{opacity:0.7;}}
+      `}</style>
+      
+      <header style={{ background: '#fff', borderBottom: '1px solid var(--border)', padding: '16px 24px', position: 'sticky', top: 0, zIndex: 10 }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <img src={LogoCapyme} alt="CAPYME" style={{ height: '38px', objectFit: 'contain' }} />
+        </div>
+      </header>
+
+      <div style={{ padding: '60px 20px', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 80px)' }}>
+        <div style={{ background: '#fff', borderRadius: 'var(--radius-xl)', width: '100%', maxWidth: '440px', padding: '40px 32px', textAlign: 'center', boxShadow: '0 24px 64px rgba(0,0,0,0.12)', position: 'relative', overflow: 'hidden', animation: 'modalIn 0.3s ease both' }}>
+          
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '6px', background: estado === 'error' ? '#EF4444' : 'linear-gradient(90deg, var(--capyme-blue-mid), var(--capyme-blue))' }}></div>
+
+          {estado === 'procesando' && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ width: '80px', height: '80px', background: 'var(--capyme-blue-pale)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
+                <Loader2 style={{ width: '36px', height: '36px', color: 'var(--capyme-blue-mid)', animation: 'spin 1s linear infinite' }} />
+              </div>
+              <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '24px', fontWeight: 900, color: 'var(--capyme-dark)', marginBottom: '12px' }}>Validando tu pago</h2>
+              <p style={{ fontSize: '15px', color: 'var(--gray-500)', lineHeight: 1.6 }}>Estamos verificando la información de forma segura. Por favor, no cierres esta ventana.</p>
             </div>
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">Validando pago</h2>
-            <p className="text-gray-600 mb-6 text-lg">Estamos preparando tu descarga...</p>
-          </>
-        )}
+          )}
 
-        {estado === 'completado' && (
-          <>
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-              </svg>
+          {estado === 'completado' && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ width: '80px', height: '80px', background: '#ECFDF5', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', boxShadow: '0 8px 24px rgba(16,185,129,0.2)' }}>
+                <CheckCircle style={{ width: '40px', height: '40px', color: '#10B981' }} />
+              </div>
+              <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '28px', fontWeight: 900, color: 'var(--capyme-dark)', marginBottom: '16px' }}>¡Pago Exitoso!</h2>
+              
+              <div style={{ background: 'var(--capyme-blue-pale)', border: '1px solid rgba(43,91,166,0.1)', padding: '20px', borderRadius: 'var(--radius-lg)', width: '100%', marginBottom: '32px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', color: 'var(--capyme-blue-mid)', fontWeight: 800, marginBottom: '8px' }}>
+                  <Download style={{ width: '20px', height: '20px', animation: 'pulseSoft 2s infinite' }} />
+                  <span>Descarga en curso...</span>
+                </div>
+                <p style={{ fontSize: '13px', color: 'var(--gray-600)', margin: 0 }}>Tu PDF se descargará automáticamente. Revisa tu carpeta de descargas.</p>
+              </div>
+
+              <p style={{ fontSize: '14px', fontWeight: 600, color: 'var(--gray-400)', marginBottom: '24px' }}>
+                Regresando al catálogo en <span style={{ color: 'var(--capyme-blue-mid)', fontSize: '18px', fontWeight: 800 }}>{contador}</span>s
+              </p>
+
+              <button onClick={() => navigate('/catalogos')} style={{ width: '100%', padding: '14px', background: '#fff', border: '1px solid var(--border)', color: 'var(--gray-700)', borderRadius: 'var(--radius-md)', fontSize: '14px', fontWeight: 700, fontFamily: "'DM Sans', sans-serif", cursor: 'pointer', transition: 'all 150ms ease' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-100)'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
+                Volver al Catálogo Ahora
+              </button>
             </div>
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">¡Pago Exitoso!</h2>
-            <p className="text-gray-600 mb-6 text-lg">Tu PDF se está descargando automáticamente.</p>
-            
-            <p className="text-sm text-gray-500 mb-8 font-medium">
-              Regresando al catálogo en <span className="text-blue-600 text-lg">{countdown}</span> segundos...
-            </p>
+          )}
 
-            <button
-              onClick={() => navigate('/catalogos')}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200"
-            >
-              Regresar ahora
-            </button>
-          </>
-        )}
+          {estado === 'error' && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ width: '80px', height: '80px', background: '#FEF2F2', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px', boxShadow: '0 8px 24px rgba(239,68,68,0.2)' }}>
+                <AlertCircle style={{ width: '40px', height: '40px', color: '#EF4444' }} />
+              </div>
+              <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '24px', fontWeight: 900, color: 'var(--gray-900)', marginBottom: '16px' }}>Algo salió mal</h2>
+              
+              <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', padding: '16px', borderRadius: 'var(--radius-md)', width: '100%', marginBottom: '32px', textAlign: 'left' }}>
+                <p style={{ fontSize: '14px', color: '#DC2626', margin: 0, lineHeight: 1.5 }}>{mensajeError}</p>
+              </div>
 
-        {estado === 'error' && (
-          <>
-            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-              </svg>
+              <button onClick={() => navigate('/catalogos')} style={{ width: '100%', padding: '14px', background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', border: 'none', color: '#fff', borderRadius: 'var(--radius-md)', fontSize: '14px', fontWeight: 700, fontFamily: "'DM Sans', sans-serif", cursor: 'pointer', boxShadow: '0 4px 12px rgba(31,78,158,0.25)', transition: 'all 150ms ease' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                Volver a intentar
+              </button>
             </div>
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">Algo salió mal</h2>
-            <p className="text-gray-600 mb-6 text-lg">{mensajeError}</p>
-            
-            <button
-              onClick={() => navigate('/catalogos')}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200"
-            >
-              Volver al Catálogo
-            </button>
-          </>
-        )}
-
+          )}
+        </div>
       </div>
     </div>
   );
