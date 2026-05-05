@@ -26,7 +26,7 @@ const eliminarPdf = async (id) => {
 };
 
 const crearPreferencia = async (data) => {
-  const response = await axios.post('/catalogos/crear-preferencia', data);
+  const response = await axios.post('/pagos-catalogos/crear-preferencia', data);
   return response.data;
 };
 

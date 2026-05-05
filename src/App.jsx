@@ -33,6 +33,9 @@ import ClienteContacto from './pages/cliente/Contacto';
 import PagoExitoso from './pages/PagoExitoso';
 import PagoFallido from './pages/PagoFallido';
 
+import PagoExitosoCatalogo from './pages/PagoExitosoCatalogo';
+import PagoFallidoCatalogo from './pages/PagoFallidoCatalogo';
+
 import CatalogosPublicos from './pages/CatalogosPublicos';
 import CatalogosAdmin from './pages/admin/CatalogosAdmin';
 
@@ -54,6 +57,8 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/catalogos" element={<CatalogosPublicos />} />
+        <Route path="/catalogo/pago-exitoso" element={<PagoExitosoCatalogo />} />
+        <Route path="/catalogo/pago-fallido" element={<PagoFallidoCatalogo />} />
 
         <Route path="/pago-exitoso"   element={<PagoExitoso />} />
         <Route path="/pago-fallido"   element={<PagoFallido />} />
