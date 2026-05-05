@@ -1,7 +1,9 @@
 import axios from './axios';
 
 const crearPdf = async (data) => {
-  const response = await axios.post('/catalogos', data);
+  const response = await axios.post('/catalogos', data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
   return response.data;
 };
 
@@ -16,7 +18,9 @@ const obtenerPublicos = async () => {
 };
 
 const actualizarPdf = async (id, data) => {
-  const response = await axios.put(`/catalogos/${id}`, data);
+  const response = await axios.put(`/catalogos/${id}`, data, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
   return response.data;
 };
 
@@ -26,7 +30,6 @@ const eliminarPdf = async (id) => {
 };
 
 const descargarPdf = async (pdf_id, payment_id) => {
-  // Asegúrate de usar los backticks (`) correctos para la interpolación
   const response = await axios.get(`/catalogos/descargar?pdf_id=${pdf_id}&payment_id=${payment_id}`);
   return response.data;
 };

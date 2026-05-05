@@ -99,26 +99,26 @@ const CatalogosPublicos = () => {
         .catalogo-modal{animation:modalIn 0.25s ease both;}
       `}</style>
 
-      {/* Navbar Público Minimalista (Solo el Logo Centrado) */}
       <header style={{ background: '#fff', borderBottom: '1px solid var(--border)', padding: '16px 24px', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <img src={LogoCapyme} alt="CAPYME" style={{ height: '38px', objectFit: 'contain' }} />
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <img src={LogoCapyme} alt="CAPYME" style={{ height: '36px', objectFit: 'contain' }} />
+          <button onClick={() => navigate('/login')} style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--capyme-blue-mid)', color: 'var(--capyme-blue-mid)', borderRadius: 'var(--radius-md)', fontWeight: 700, cursor: 'pointer', transition: 'all 150ms' }} onMouseEnter={e => {e.currentTarget.style.background = 'var(--capyme-blue-pale)'}} onMouseLeave={e => {e.currentTarget.style.background = 'transparent'}}>
+            Iniciar Sesión
+          </button>
         </div>
       </header>
 
       <div style={{ padding: '40px 20px', maxWidth: '1200px', margin: '0 auto' }}>
         
-        {/* Cabecera Principal */}
         <div style={{ textAlign: 'center', marginBottom: '48px' }}>
           <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '38px', fontWeight: 900, color: 'var(--gray-900)', letterSpacing: '-0.02em', marginBottom: '12px' }}>
             Catálogo de <span style={{ color: 'var(--capyme-blue-mid)' }}>PDFs Exclusivos</span>
           </h1>
           <p style={{ fontSize: '16px', color: 'var(--gray-500)', maxWidth: '600px', margin: '0 auto', lineHeight: 1.6 }}>
-            Adquiere material digital y herramientas prácticas para potenciar tu negocio al instante.
+            Adquiere material digital y herramientas prácticas para potenciar tu negocio al instante. Sin necesidad de registrarte.
           </p>
         </div>
 
-        {/* Alerta de Retorno de Pago */}
         {descargaEstado && (
           <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '24px', marginBottom: '32px', boxShadow: '0 4px 12px rgba(15,42,90,0.06)', display: 'flex', alignItems: 'center', gap: '16px', animation: 'modalIn 0.3s ease' }}>
             {descargaEstado === 'procesando' && (
@@ -160,7 +160,6 @@ const CatalogosPublicos = () => {
           </div>
         )}
 
-        {/* Estado de Carga / Grid de Tarjetas */}
         {loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0', gap: '16px' }}>
             <div style={{ width: '40px', height: '40px', border: '3px solid var(--gray-200)', borderTopColor: 'var(--capyme-blue-mid)', borderRadius: '50%', animation: 'spin 700ms linear infinite' }}></div>
@@ -174,11 +173,19 @@ const CatalogosPublicos = () => {
                 className="catalogo-card" 
                 style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', display: 'flex', flexDirection: 'column', animationDelay: `${idx * 40}ms` }}
               >
-                <div style={{ height: '4px', background: 'linear-gradient(90deg, var(--capyme-blue-mid), var(--capyme-blue))' }} />
+                {/* Contenedor de Imagen de Portada */}
+                <div style={{ height: '180px', width: '100%', background: 'var(--gray-100)', position: 'relative', overflow: 'hidden' }}>
+                  {pdf.imagenUrl ? (
+                    <img src={pdf.imagenUrl} alt={pdf.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ display: 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', background: 'var(--capyme-blue-pale)', color: 'var(--capyme-blue-mid)' }}>
+                      <FileText style={{ width: '40px', height: '40px', opacity: 0.5 }} />
+                    </div>
+                  )}
+                  <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '4px', background: 'linear-gradient(90deg, var(--capyme-blue-mid), var(--capyme-blue))' }} />
+                </div>
+                
                 <div style={{ padding: '24px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ width: '48px', height: '48px', background: 'var(--capyme-blue-pale)', color: 'var(--capyme-blue-mid)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-                    <FileText style={{ width: '24px', height: '24px' }} />
-                  </div>
                   <h3 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '18px', fontWeight: 800, color: 'var(--gray-900)', marginBottom: '10px', lineHeight: 1.3 }}>
                     {pdf.titulo}
                   </h3>
@@ -219,10 +226,14 @@ const CatalogosPublicos = () => {
             <div className="catalogo-modal" onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: '500px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflow: 'hidden' }}>
               
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '24px', background: 'var(--gray-50)', borderBottom: '1px solid var(--border)' }}>
-                <div style={{ display: 'flex', gap: '16px' }}>
-                  <div style={{ width: '48px', height: '48px', background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 12px rgba(31,78,158,0.25)' }}>
-                    <FileText style={{ width: '24px', height: '24px', color: '#fff' }} />
-                  </div>
+                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                  {selectedPdf.imagenUrl ? (
+                    <img src={selectedPdf.imagenUrl} alt="Portada" style={{ width: '48px', height: '48px', borderRadius: 'var(--radius-md)', objectFit: 'cover', boxShadow: '0 4px 12px rgba(31,78,158,0.25)' }} />
+                  ) : (
+                    <div style={{ width: '48px', height: '48px', background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 12px rgba(31,78,158,0.25)' }}>
+                      <FileText style={{ width: '24px', height: '24px', color: '#fff' }} />
+                    </div>
+                  )}
                   <div>
                     <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--gray-900)', fontFamily: "'Plus Jakarta Sans', sans-serif", margin: '0 0 4px', lineHeight: 1.2 }}>
                       {selectedPdf.titulo}
@@ -279,5 +290,4 @@ const CatalogosPublicos = () => {
   );
 };
 
-export default CatalogosPublicos;
-```</Layout>
+export default CatalogosPublicos; 
