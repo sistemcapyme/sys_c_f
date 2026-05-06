@@ -4,13 +4,14 @@ import { enlacesService } from '../services/enlacesService';
 import {
   Link2, Plus, Search, Edit, X, ExternalLink, Video, FileText,
   DollarSign, ChevronDown, AlertCircle, ShoppingBag, AlertTriangle,
-  CheckCircle, Users, Trash2,
+  CheckCircle, Users, Trash2, Image as ImageIcon
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const initialFormData = {
   titulo: '', descripcion: '', url: '', tipo: 'otro',
   categoria: '', visiblePara: 'todos', costo: '',
+  formato: 'video', imagen: null
 };
 
 const ConfirmModal = ({ config, onClose }) => {
@@ -79,6 +80,7 @@ const Enlaces = () => {
   const [formData,         setFormData]         = useState(initialFormData);
   const [formErrors,       setFormErrors]       = useState({});
   const [confirmConfig,    setConfirmConfig]    = useState({ show:false });
+  const [previewImage,     setPreviewImage]     = useState(null);
 
   const showConfirm = (cfg) => setConfirmConfig({ show:true,...cfg });
   const closeConfirm= () => setConfirmConfig({ show:false });
@@ -132,17 +134,51 @@ const Enlaces = () => {
   const handleOpenModal = (mode, enlace=null) => {
     setModalMode(mode); setSelectedEnlace(enlace); setFormErrors({});
     if (mode==='edit'&&enlace) {
-      setFormData({ titulo:enlace.titulo||'',descripcion:enlace.descripcion||'',url:enlace.url||'',tipo:enlace.tipo||'otro',categoria:enlace.categoria||'',visiblePara:enlace.visiblePara||'todos',costo:enlace.costo!=null?String(enlace.costo):'' });
-    } else { setFormData(initialFormData); }
+      setFormData({ 
+        titulo:enlace.titulo||'',
+        descripcion:enlace.descripcion||'',
+        url:enlace.url||'',
+        tipo:enlace.tipo||'otro',
+        categoria:enlace.categoria||'',
+        visiblePara:enlace.visiblePara||'todos',
+        costo:enlace.costo!=null?String(enlace.costo):'',
+        formato:enlace.formato||'video',
+        imagen: null
+      });
+      setPreviewImage(enlace.imagenUrl || null);
+    } else { 
+      setFormData(initialFormData); 
+      setPreviewImage(null);
+    }
     setShowModal(true);
   };
 
-  const handleCloseModal = () => { setShowModal(false); setSelectedEnlace(null); setFormErrors({}); };
+  const handleCloseModal = () => { 
+    setShowModal(false); 
+    setSelectedEnlace(null); 
+    setFormErrors({}); 
+    setPreviewImage(null);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev=>({...prev,[name]:value}));
     if (formErrors[name]) setFormErrors(prev=>({...prev,[name]:''}));
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({ ...prev, imagen: reader.result }));
+        setPreviewImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setFormData(prev => ({ ...prev, imagen: null }));
+      setPreviewImage(null);
+    }
   };
 
   const handleSubmit = async () => {
@@ -151,11 +187,19 @@ const Enlaces = () => {
     try {
       const { activo, ...rest } = formData;
       const dataToSend = { ...rest, costo:formData.costo!==''?parseFloat(formData.costo):0, descripcion:formData.descripcion||null, categoria:formData.categoria||null };
-      if (modalMode==='create') { await enlacesService.create(dataToSend); toast.success('Catálogo creado exitosamente'); }
-      else { await enlacesService.update(selectedEnlace.id,dataToSend); toast.success('Catálogo actualizado exitosamente'); }
+      if (modalMode==='create') { 
+        await enlacesService.create(dataToSend); 
+        toast.success('Catálogo creado exitosamente'); 
+      } else { 
+        await enlacesService.update(selectedEnlace.id,dataToSend); 
+        toast.success('Catálogo actualizado exitosamente'); 
+      }
       handleCloseModal(); cargarEnlaces();
-    } catch (error) { toast.error(error.response?.data?.message||'Error al guardar catálogo'); }
-    finally { setSubmitting(false); }
+    } catch (error) { 
+      toast.error(error.response?.data?.message||'Error al guardar catálogo'); 
+    } finally { 
+      setSubmitting(false); 
+    }
   };
 
   const handleToggleActivo = (enlace) => {
@@ -207,7 +251,6 @@ const Enlaces = () => {
 
       <div style={{ padding:'0 0 40px' }}>
 
-        {/* Header */}
         <div style={{ display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:'28px',flexWrap:'wrap',gap:'16px' }}>
           <div style={{ display:'flex',alignItems:'center',gap:'14px' }}>
             <div style={{ width:'46px',height:'46px',background:'linear-gradient(135deg,var(--capyme-blue-mid),var(--capyme-blue))',borderRadius:'var(--radius-md)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 12px rgba(31,78,158,0.25)' }}>
@@ -227,7 +270,6 @@ const Enlaces = () => {
           )}
         </div>
 
-        {/* Stats */}
         <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(130px,1fr))',gap:'12px',marginBottom:'20px' }}>
           {[{label:'Total',value:enlaces.length,color:'var(--capyme-blue-mid)',bg:'var(--capyme-blue-pale)'},{label:'Activos',value:enlaces.filter(e=>e.activo).length,color:'#16A34A',bg:'#F0FDF4'},{label:'Inactivos',value:enlaces.filter(e=>!e.activo).length,color:'#DC2626',bg:'#FEF2F2'},{label:'Con costo',value:enlaces.filter(e=>parseFloat(e.costo||0)>0).length,color:'#C2410C',bg:'#FFF7ED'}].map(s=>(
             <div key={s.label} style={{ background:s.bg,borderRadius:'var(--radius-md)',padding:'14px 16px',display:'flex',alignItems:'center',gap:'10px' }}>
@@ -237,7 +279,6 @@ const Enlaces = () => {
           ))}
         </div>
 
-        {/* Filtros */}
         <div style={{ background:'#fff',border:'1px solid var(--border)',borderRadius:'var(--radius-lg)',padding:'16px 20px',marginBottom:'20px',display:'flex',gap:'12px',alignItems:'center',flexWrap:'wrap',boxShadow:'var(--shadow-sm)' }}>
           <div style={{ position:'relative',flex:'1',minWidth:'180px' }}>
             <Search style={{ position:'absolute',left:'11px',top:'50%',transform:'translateY(-50%)',width:'15px',height:'15px',color:'var(--gray-400)',pointerEvents:'none' }}/>
@@ -257,7 +298,6 @@ const Enlaces = () => {
           </div>
         </div>
 
-        {/* Grid de tarjetas */}
         {enlacesFiltrados.length===0?(
           <div style={{ background:'#fff',border:'1px solid var(--border)',borderRadius:'var(--radius-lg)',padding:'60px 20px',textAlign:'center',boxShadow:'var(--shadow-sm)' }}>
             <div style={{ width:'56px',height:'56px',background:'var(--gray-100)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px' }}>
@@ -274,6 +314,11 @@ const Enlaces = () => {
               return (
                 <div key={enlace.id} className="enlace-card" style={{ background:'#fff',border:'1px solid var(--border)',borderRadius:'var(--radius-lg)',overflow:'hidden',animationDelay:`${idx*40}ms`,opacity:enlace.activo?1:0.6 }}>
                   <div style={{ height:'4px',background:enlace.activo?'linear-gradient(90deg,var(--capyme-blue-mid),var(--capyme-blue))':'var(--gray-200)' }}/>
+                  {enlace.imagenUrl && (
+                    <div style={{ width:'100%', height:'140px', overflow:'hidden', borderBottom:'1px solid var(--border)' }}>
+                      <img src={enlace.imagenUrl} alt={enlace.titulo} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                    </div>
+                  )}
                   <div style={{ padding:'20px' }}>
                     <div style={{ display:'flex',alignItems:'flex-start',gap:'12px',marginBottom:'14px' }}>
                       <div style={{ width:'40px',height:'40px',background:ts.bg,borderRadius:'var(--radius-md)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0 }}><TIcon style={{ width:'18px',height:'18px',color:ts.color }}/></div>
@@ -329,7 +374,6 @@ const Enlaces = () => {
         )}
       </div>
 
-      {/* Modal Crear/Editar */}
       {showModal&&(
         <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.42)',backdropFilter:'blur(4px)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:'20px' }}>
           <div className="enlace-modal" onClick={e=>e.stopPropagation()} style={{ background:'#fff',borderRadius:'var(--radius-lg)',width:'100%',maxWidth:'620px',maxHeight:'92vh',display:'flex',flexDirection:'column',boxShadow:'0 24px 64px rgba(0,0,0,0.18)',overflow:'hidden' }}>
@@ -343,6 +387,14 @@ const Enlaces = () => {
               </button>
             </div>
             <div style={{ overflowY:'auto',flex:1,padding:'24px',display:'flex',flexDirection:'column',gap:'20px' }}>
+              
+              <SectionTitle icon={ImageIcon} text="Portada del recurso" />
+              <div>
+                <label style={labelStyle}>Imagen de Portada (Opcional)</label>
+                <input type="file" accept="image/*" onChange={handleImageChange} style={{ ...inputBaseStyle, padding:'6px' }}/>
+                {previewImage&&<div style={{ marginTop:'10px' }}><img src={previewImage} alt="Preview" style={{ height:'100px',borderRadius:'var(--radius-md)',objectFit:'cover',border:'1px solid var(--border)' }}/></div>}
+              </div>
+
               <SectionTitle icon={Link2} text="Información del catálogo" />
               <div style={{ display:'flex',flexDirection:'column',gap:'14px' }}>
                 <div>
@@ -366,6 +418,16 @@ const Enlaces = () => {
               <SectionTitle icon={ShoppingBag} text="Clasificación y acceso" />
               <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:'14px' }}>
                 <div>
+                  <label style={labelStyle}>Formato del Archivo</label>
+                  <div style={{ position:'relative' }}>
+                    <select name="formato" value={formData.formato} onChange={handleChange} style={selectStyle}>
+                      <option value="video">Video</option>
+                      <option value="pdf">PDF</option>
+                    </select>
+                    <ChevronDown style={{ position:'absolute',right:'10px',top:'50%',transform:'translateY(-50%)',width:'14px',height:'14px',color:'var(--gray-400)',pointerEvents:'none' }}/>
+                  </div>
+                </div>
+                <div>
                   <label style={labelStyle}>Tipo</label>
                   <div style={{ position:'relative' }}>
                     <select name="tipo" value={formData.tipo} onChange={handleChange} style={selectStyle}><option value="video">Video</option><option value="financiamiento">Financiamiento</option><option value="documento">Documento</option><option value="otro">Otro</option></select>
@@ -383,7 +445,7 @@ const Enlaces = () => {
                     <ChevronDown style={{ position:'absolute',right:'10px',top:'50%',transform:'translateY(-50%)',width:'14px',height:'14px',color:'var(--gray-400)',pointerEvents:'none' }}/>
                   </div>
                 </div>
-                <div>
+                <div style={{ gridColumn: 'span 2' }}>
                   <label style={labelStyle}>Costo de acceso (MXN)</label>
                   <div style={{ position:'relative' }}>
                     <DollarSign style={{ position:'absolute',left:'11px',top:'50%',transform:'translateY(-50%)',width:'14px',height:'14px',color:'var(--gray-400)',pointerEvents:'none' }}/>
@@ -407,7 +469,6 @@ const Enlaces = () => {
         </div>
       )}
 
-      {/* Modal Accesos (solo lectura) */}
       {showAccesosModal&&(
         <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.42)',backdropFilter:'blur(4px)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:'20px' }}>
           <div className="enlace-modal" onClick={e=>e.stopPropagation()} style={{ background:'#fff',borderRadius:'var(--radius-lg)',width:'100%',maxWidth:'680px',maxHeight:'88vh',display:'flex',flexDirection:'column',boxShadow:'0 24px 64px rgba(0,0,0,0.18)',overflow:'hidden' }}>
