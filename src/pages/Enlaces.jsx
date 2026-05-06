@@ -169,9 +169,9 @@ const Enlaces = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setFormData(prev => ({ ...prev, imagen: file }));
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, imagen: reader.result }));
         setPreviewImage(reader.result);
       };
       reader.readAsDataURL(file);
@@ -185,21 +185,53 @@ const Enlaces = () => {
     if (!validateForm()) return;
     setSubmitting(true);
     try {
-      const { activo, ...rest } = formData;
-      const dataToSend = { ...rest, costo:formData.costo!==''?parseFloat(formData.costo):0, descripcion:formData.descripcion||null, categoria:formData.categoria||null };
+      const formDataToSend = new FormData();
+      formDataToSend.append('titulo', formData.titulo);
+      formDataToSend.append('url', formData.url);
+      formDataToSend.append('tipo', formData.tipo);
+      formDataToSend.append('formato', formData.formato);
+      formDataToSend.append('visiblePara', formData.visiblePara);
+      formDataToSend.append('costo', formData.costo !== '' ? formData.costo : 0);
+
+      if (formData.descripcion) formDataToSend.append('descripcion', formData.descripcion);
+      if (formData.categoria) formDataToSend.append('categoria', formData.categoria);
+      
+      if (formData.imagen instanceof File) {
+        formDataToSend.append('imagen', formData.imagen);
+      }
+
       if (modalMode==='create') { 
-        await enlacesService.create(dataToSend); 
+        await enlacesService.create(formDataToSend); 
         toast.success('Catálogo creado exitosamente'); 
       } else { 
-        await enlacesService.update(selectedEnlace.id,dataToSend); 
+        await enlacesService.update(selectedEnlace.id, formDataToSend); 
         toast.success('Catálogo actualizado exitosamente'); 
       }
-      handleCloseModal(); cargarEnlaces();
+      handleCloseModal(); 
+      cargarEnlaces();
     } catch (error) { 
       toast.error(error.response?.data?.message||'Error al guardar catálogo'); 
     } finally { 
       setSubmitting(false); 
     }
+  };
+
+  const handleEliminar = (id) => {
+    showConfirm({
+      variant: 'danger', title: 'Eliminar catálogo',
+      subtitle: 'Esta acción es irreversible',
+      message: `¿Estás seguro de que deseas eliminar este catálogo permanentemente?`,
+      confirmLabel: 'Eliminar',
+      onConfirm: async () => {
+        try {
+          await enlacesService.delete(id);
+          toast.success('Catálogo eliminado correctamente');
+          cargarEnlaces();
+        } catch {
+          toast.error('Error al eliminar catálogo');
+        }
+      },
+    });
   };
 
   const handleToggleActivo = (enlace) => {
@@ -314,9 +346,13 @@ const Enlaces = () => {
               return (
                 <div key={enlace.id} className="enlace-card" style={{ background:'#fff',border:'1px solid var(--border)',borderRadius:'var(--radius-lg)',overflow:'hidden',animationDelay:`${idx*40}ms`,opacity:enlace.activo?1:0.6 }}>
                   <div style={{ height:'4px',background:enlace.activo?'linear-gradient(90deg,var(--capyme-blue-mid),var(--capyme-blue))':'var(--gray-200)' }}/>
-                  {enlace.imagenUrl && (
-                    <div style={{ width:'100%', height:'140px', overflow:'hidden', borderBottom:'1px solid var(--border)' }}>
+                  {enlace.imagenUrl ? (
+                    <div style={{ width:'100%', height:'150px', overflow:'hidden', borderBottom:'1px solid var(--border)' }}>
                       <img src={enlace.imagenUrl} alt={enlace.titulo} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                    </div>
+                  ) : (
+                    <div style={{ width:'100%', height:'150px', backgroundColor: 'var(--gray-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom:'1px solid var(--border)' }}>
+                       <ImageIcon style={{ width: '40px', height: '40px', color: 'var(--gray-300)' }} />
                     </div>
                   )}
                   <div style={{ padding:'20px' }}>
@@ -325,7 +361,7 @@ const Enlaces = () => {
                       <div style={{ flex:1,minWidth:0 }}>
                         <h3 style={{ fontSize:'15px',fontWeight:700,color:'var(--gray-900)',fontFamily:"'Plus Jakarta Sans',sans-serif",margin:'0 0 6px',lineHeight:1.3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{enlace.titulo}</h3>
                         <div style={{ display:'flex',gap:'5px',flexWrap:'wrap' }}>
-                          <span style={{ padding:'2px 8px',borderRadius:'20px',fontSize:'11px',fontWeight:700,background:ts.bg,color:ts.color,fontFamily:"'Plus Jakarta Sans',sans-serif",textTransform:'uppercase',letterSpacing:'0.03em' }}>{getTipoLabel(enlace.tipo)}</span>
+                          <span style={{ padding:'2px 8px',borderRadius:'20px',fontSize:'11px',fontWeight:700,background:ts.bg,color:ts.color,fontFamily:"'Plus Jakarta Sans',sans-serif",textTransform:'uppercase',letterSpacing:'0.03em' }}>{enlace.formato}</span>
                           <span style={{ padding:'2px 8px',borderRadius:'20px',fontSize:'11px',fontWeight:700,background:vs.bg,color:vs.color,fontFamily:"'Plus Jakarta Sans',sans-serif" }}>{getVisibleLabel(enlace.visiblePara)}</span>
                           <span style={{ padding:'2px 8px',borderRadius:'20px',fontSize:'11px',fontWeight:700,background:esGratis?'#ECFDF5':'#FFF7ED',color:esGratis?'#065F46':'#C2410C',fontFamily:"'Plus Jakarta Sans',sans-serif" }}>{esGratis?'Gratis':formatCurrency(enlace.costo)}</span>
                           <span style={{ padding:'2px 8px',borderRadius:'20px',fontSize:'11px',fontWeight:700,background:enlace.activo?'#ECFDF5':'#FEF2F2',color:enlace.activo?'#065F46':'#DC2626',fontFamily:"'Plus Jakarta Sans',sans-serif" }}>{enlace.activo?'● Activo':'● Inactivo'}</span>
@@ -341,28 +377,18 @@ const Enlaces = () => {
                         </button>
                       )}
                       <a href={enlace.url} target="_blank" rel="noopener noreferrer" style={{ display:'flex',alignItems:'center',justifyContent:'center',gap:'7px',padding:'7px 12px',background:'var(--capyme-blue-pale)',color:'var(--capyme-blue-mid)',border:'none',borderRadius:'var(--radius-md)',fontSize:'12px',fontWeight:600,fontFamily:"'DM Sans',sans-serif",textDecoration:'none',transition:'all 150ms ease' }} onMouseEnter={e=>{e.currentTarget.style.background='var(--capyme-blue-mid)';e.currentTarget.style.color='#fff';}} onMouseLeave={e=>{e.currentTarget.style.background='var(--capyme-blue-pale)';e.currentTarget.style.color='var(--capyme-blue-mid)';}}>
-                        <ExternalLink style={{ width:'13px',height:'13px' }}/> Abrir catálogo
+                        <ExternalLink style={{ width:'13px',height:'13px' }}/> Abrir recurso
                       </a>
                       <div style={{ display:'flex',gap:'6px' }}>
                         {currentUser.rol!=='cliente'&&(
-                          <button onClick={()=>handleOpenModal('edit',enlace)} style={{ flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',padding:'7px 12px',border:'1px solid var(--border)',borderRadius:'var(--radius-sm)',background:'transparent',cursor:'pointer',color:'var(--gray-600)',fontSize:'12px',fontFamily:"'DM Sans',sans-serif",fontWeight:600,transition:'all 150ms ease' }} onMouseEnter={e=>{e.currentTarget.style.background='#EEF4FF';e.currentTarget.style.color='var(--capyme-blue-mid)';e.currentTarget.style.borderColor='var(--capyme-blue-mid)';}} onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.color='var(--gray-600)';e.currentTarget.style.borderColor='var(--border)';}}>
-                            <Edit style={{ width:'13px',height:'13px' }}/> Editar
-                          </button>
-                        )}
-                        {currentUser.rol==='admin'&&(
                           <>
-                            {!enlace.activo&&<button onClick={()=>handleToggleActivo(enlace)} style={{ flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',padding:'7px 12px',border:'1px solid var(--border)',borderRadius:'var(--radius-sm)',background:'transparent',cursor:'pointer',color:'var(--gray-400)',fontSize:'12px',fontFamily:"'DM Sans',sans-serif",fontWeight:600,transition:'all 150ms ease' }} onMouseEnter={e=>{e.currentTarget.style.background='#ECFDF5';e.currentTarget.style.color='#065F46';e.currentTarget.style.borderColor='#16A34A';}} onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.color='var(--gray-400)';e.currentTarget.style.borderColor='var(--border)';}}>
-                              <CheckCircle style={{ width:'13px',height:'13px' }}/> Activar
-                            </button>}
-                            {enlace.activo&&<button onClick={()=>handleToggleActivo(enlace)} style={{ flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',padding:'7px 12px',border:'1px solid var(--border)',borderRadius:'var(--radius-sm)',background:'transparent',cursor:'pointer',color:'var(--gray-400)',fontSize:'12px',fontFamily:"'DM Sans',sans-serif",fontWeight:600,transition:'all 150ms ease' }} onMouseEnter={e=>{e.currentTarget.style.background='#FEF2F2';e.currentTarget.style.color='#DC2626';e.currentTarget.style.borderColor='#DC2626';}} onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.color='var(--gray-400)';e.currentTarget.style.borderColor='var(--border)';}}>
-                              <Trash2 style={{ width:'13px',height:'13px' }}/> Desactivar
-                            </button>}
+                            <button onClick={()=>handleOpenModal('edit',enlace)} style={{ flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',padding:'7px 12px',border:'1px solid var(--border)',borderRadius:'var(--radius-sm)',background:'transparent',cursor:'pointer',color:'var(--gray-600)',fontSize:'12px',fontFamily:"'DM Sans',sans-serif",fontWeight:600,transition:'all 150ms ease' }} onMouseEnter={e=>{e.currentTarget.style.background='#EEF4FF';e.currentTarget.style.color='var(--capyme-blue-mid)';e.currentTarget.style.borderColor='var(--capyme-blue-mid)';}} onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.color='var(--gray-600)';e.currentTarget.style.borderColor='var(--border)';}}>
+                              <Edit style={{ width:'13px',height:'13px' }}/> Editar
+                            </button>
+                            <button onClick={()=>handleEliminar(enlace.id)} style={{ flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',padding:'7px 12px',border:'1px solid var(--border)',borderRadius:'var(--radius-sm)',background:'transparent',cursor:'pointer',color:'var(--gray-600)',fontSize:'12px',fontFamily:"'DM Sans',sans-serif",fontWeight:600,transition:'all 150ms ease' }} onMouseEnter={e=>{e.currentTarget.style.background='#FEF2F2';e.currentTarget.style.color='#DC2626';e.currentTarget.style.borderColor='#DC2626';}} onMouseLeave={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.color='var(--gray-600)';e.currentTarget.style.borderColor='var(--border)';}}>
+                              <Trash2 style={{ width:'13px',height:'13px' }}/> Eliminar
+                            </button>
                           </>
-                        )}
-                        {currentUser.rol==='colaborador'&&(
-                          <div style={{ flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',padding:'7px 12px',border:'1px solid var(--border)',borderRadius:'var(--radius-sm)',background:'transparent',cursor:'not-allowed',color:'var(--gray-200)',fontSize:'12px',fontFamily:"'DM Sans',sans-serif",fontWeight:600 }}>
-                            {enlace.activo?<><Trash2 style={{ width:'13px',height:'13px' }}/> Desactivar</>:<><CheckCircle style={{ width:'13px',height:'13px' }}/> Activar</>}
-                          </div>
                         )}
                       </div>
                     </div>
