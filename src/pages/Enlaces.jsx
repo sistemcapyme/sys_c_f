@@ -425,7 +425,7 @@ const Enlaces = () => {
               <div style={{ display:'flex',flexDirection:'column',gap:'14px' }}>
                 <div>
                   <label style={labelStyle}>Título <span style={{ color:'#EF4444' }}>*</span></label>
-                  <input name="titulo" type="text" value={formData.titulo} onChange={handleChange} placeholder="Ej. Catálogo de productos 2025" style={{ ...inputBaseStyle,...(formErrors.titulo?inputErrorStyle:{}) }} onFocus={e=>{if(!formErrors.titulo){e.target.style.borderColor='var(--capyme-blue-mid)';e.target.style.boxShadow='0 0 0 3px rgba(43,91,166,0.12)';}}} onBlur={e=>{if(!formErrors.titulo){e.target.style.borderColor='var(--border)';e.target.style.boxShadow='none';}}}/>
+                  <input name="titulo" type="text" value={formData.titulo} onChange={handleChange} placeholder="Ej. Catálogo de productos 2026" style={{ ...inputBaseStyle,...(formErrors.titulo?inputErrorStyle:{}) }} onFocus={e=>{if(!formErrors.titulo){e.target.style.borderColor='var(--capyme-blue-mid)';e.target.style.boxShadow='0 0 0 3px rgba(43,91,166,0.12)';}}} onBlur={e=>{if(!formErrors.titulo){e.target.style.borderColor='var(--border)';e.target.style.boxShadow='none';}}}/>
                   {formErrors.titulo&&<ErrorMsg text={formErrors.titulo}/>}
                 </div>
                 <div>
