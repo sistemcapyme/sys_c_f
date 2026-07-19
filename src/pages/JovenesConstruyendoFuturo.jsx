@@ -3,7 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import AdminLiderDashboard from '../components/jcf/AdminLiderDashboard'; 
 import EncargadoDashboard from '../components/jcf/EncargadoDashboard';
 import Layout from '../components/common/Layout';
-import jcfService from '../services/jcfService'; 
+import { jcfService } from '../services/jcfService';
 
 const DashboardJCF = () => {
   const { user } = useAuth();
