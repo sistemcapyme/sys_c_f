@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../hooks/useAuth'; 
-import AdminLiderDashboard from '../components/jcf/AdminLiderDashboard'; 
-import EncargadoDashboard from '../components/jcf/EncargadoDashboard';
+import { useAuth } from '../hooks/useAuth';
+import AdminLiderDashboard from './AdminLiderDashboard';
+import EncargadoDashboard from './EncargadoDashboard';
 import Layout from '../components/common/Layout';
 import { jcfService } from '../services/jcfService';
 
@@ -28,31 +28,38 @@ const DashboardJCF = () => {
     try {
       await jcfService.actualizarEstado(id, nuevoEstado);
       setAprendices(prev => 
-        prev.map(a => a.id === id ? { ...a, estado: nuevoEstado } : a)
+        prev.map(a => a.id === id ? { ...a, estado_kanban: nuevoEstado } : a)
       );
     } catch (error) {
       console.error(error);
     }
   };
 
-  if (isLoading) return <Layout><div className="text-primary font-bold">Cargando...</div></Layout>;
+  if (isLoading) return <Layout><div className="p-6 text-blue-800 font-medium">Cargando...</div></Layout>;
+
+  const rolUsuario = user?.rol?.toLowerCase();
 
   return (
     <Layout>
-      {['ADMIN', 'LIDER_JCF'].includes(user?.rol) ? (
+      {['admin', 'lider_jcf'].includes(rolUsuario) ? (
         <AdminLiderDashboard 
           user={user} 
           aprendices={aprendices} 
           onActualizarEstado={actualizarEstadoAprendiz} 
         />
-      ) : user?.rol === 'ENCARGADO_JCF' ? (
+      ) : rolUsuario === 'encargado_jcf' ? (
         <EncargadoDashboard 
           user={user} 
           aprendices={aprendices} 
           onActualizarEstado={actualizarEstadoAprendiz} 
         />
       ) : (
-        <div className="text-red-500">Acceso Denegado</div>
+        <div className="p-6 flex flex-col items-center justify-center h-full">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-lg shadow-sm">
+            <h2 className="font-bold text-lg mb-2">Acceso Denegado</h2>
+            <p>Tu rol actual ({user?.rol}) no tiene permisos para ver este módulo.</p>
+          </div>
+        </div>
       )}
     </Layout>
   );
