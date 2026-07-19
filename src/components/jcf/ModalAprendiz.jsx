@@ -1,70 +1,135 @@
 import React, { useState } from 'react';
+import { X, Briefcase, User, MapPin, ExternalLink, Shield } from 'lucide-react';
 
-const ModalAprendiz = ({ aprendiz, onClose }) => {
-  const [encargado, setEncargado] = useState(aprendiz?.encargado_id || '');
+const SectionTitle = ({ icon: Icon, text }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '4px' }}>
+    <Icon style={{ width: '14px', height: '14px', color: 'var(--capyme-blue-mid)' }} />
+    <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--capyme-blue-mid)', textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      {text}
+    </span>
+    <div style={{ flex: 1, height: '1px', background: 'var(--border)', marginLeft: '4px' }} />
+  </div>
+);
+
+const InfoRow = ({ label, value, icon: Icon, isLink }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+    <span style={{ fontSize: '12px', color: 'var(--gray-500)', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", display: 'flex', alignItems: 'center', gap: '5px' }}>
+      {Icon && <Icon style={{ width: '13px', height: '13px', color: 'var(--gray-400)' }} />}
+      {label}
+    </span>
+    {isLink && value ? (
+      <a href={value} target="_blank" rel="noopener noreferrer" style={{ fontSize: '14px', color: 'var(--capyme-blue-mid)', fontFamily: "'DM Sans', sans-serif", fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
+        Ver documento <ExternalLink style={{ width: '12px', height: '12px' }} />
+      </a>
+    ) : (
+      <span style={{ fontSize: '14px', color: value ? 'var(--gray-900)' : 'var(--gray-400)', fontFamily: "'DM Sans', sans-serif", fontWeight: 500 }}>
+        {value || '—'}
+      </span>
+    )}
+  </div>
+);
+
+const ModalAprendiz = ({ aprendiz, onClose, onAsignarEncargado }) => {
+  const [encargado, setEncargado] = useState(aprendiz?.encargadoId || '');
 
   if (!aprendiz) return null;
 
   const guardarCambios = (e) => {
     e.preventDefault();
+    if(onAsignarEncargado && encargado !== aprendiz.encargadoId) {
+      onAsignarEncargado(aprendiz.id, encargado);
+    }
     onClose();
   };
 
+  const selectStyle = {
+    width: '100%', padding: '10px 12px', border: '1px solid var(--border)', 
+    borderRadius: 'var(--radius-md)', fontSize: '14px', fontFamily: "'DM Sans', sans-serif", 
+    color: 'var(--gray-900)', background: '#fff', outline: 'none', transition: 'all 200ms ease',
+    cursor: 'pointer'
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl overflow-hidden">
-        <div className="bg-primary text-white p-4 flex justify-between items-center">
-          <h2 className="text-xl font-bold">Detalle de Postulación</h2>
-          <button onClick={onClose} className="text-white hover:text-gray-200 font-bold text-xl">&times;</button>
-        </div>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: '800px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.18)', animation: 'modalIn 200ms ease' }}>
         
-        <form onSubmit={guardarCambios} className="p-6">
-          <div className="grid grid-cols-2 gap-6">
+        {/* Header Modal */}
+        <div style={{ padding: '20px 24px', background: 'var(--gray-50)', borderBottom: '1px solid var(--border)', borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--gray-900)' }}>
+              Detalle de Postulación
+            </h2>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif" }}>
+              Analiza los datos y asigna un encargado
+            </p>
+          </div>
+          <button onClick={onClose} style={{ width: '34px', height: '34px', border: 'none', background: 'transparent', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--gray-400)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-100)'; e.currentTarget.style.color = 'var(--gray-700)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-400)'; }}>
+            <X style={{ width: '18px', height: '18px' }} />
+          </button>
+        </div>
+
+        <form onSubmit={guardarCambios} style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{ overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '28px' }}>
             
-            <div className="border p-4 rounded bg-gray-50">
-              <h3 className="font-bold text-lg mb-3 border-b pb-2">Datos del Negocio JCF</h3>
-              <p><strong>Sucursal:</strong> {aprendiz.negocio?.sucursal}</p>
-              <p><strong>Razón Social:</strong> {aprendiz.negocio?.nombre}</p>
-              <p><strong>Representante:</strong> {aprendiz.negocio?.representante}</p>
-              <p><strong>Dirección:</strong> {aprendiz.negocio?.direccion}</p>
+            {/* Grid 2 Columnas */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+              
+              {/* Datos Aprendiz */}
+              <div>
+                <SectionTitle icon={User} text="Datos del Aprendiz" />
+                <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--gray-50)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
+                  <InfoRow label="Nombre Completo" value={`${aprendiz.nombre} ${aprendiz.apellido}`} />
+                  <InfoRow label="CURP" value={aprendiz.curp} />
+                  <InfoRow label="Teléfono" value={aprendiz.telefono} />
+                  <InfoRow label="Expediente (Drive)" value={aprendiz.urlRecurso} isLink={true} />
+                </div>
+              </div>
+
+              {/* Datos Negocio */}
+              <div>
+                <SectionTitle icon={Briefcase} text="Datos del Negocio" />
+                <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--gray-50)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
+                  <InfoRow label="Razón Social / Nombre" value={aprendiz.negocio?.nombreNegocio} />
+                  <InfoRow label="RFC" value={aprendiz.negocio?.rfc} />
+                  <InfoRow label="Dirección" value={aprendiz.negocio?.direccion} icon={MapPin} />
+                </div>
+              </div>
+
             </div>
 
-            <div className="border p-4 rounded bg-gray-50">
-              <h3 className="font-bold text-lg mb-3 border-b pb-2">Datos del Aprendiz</h3>
-              <p><strong>Nombre:</strong> {aprendiz.nombre}</p>
-              <p><strong>Categoría:</strong> {aprendiz.categoria}</p>
-              <p>
-                <strong>Documentos:</strong> 
-                <a href={aprendiz.drive_link} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline ml-2">
-                  Ver en Drive
-                </a>
-              </p>
-              
-              <div className="mt-4">
-                <label className="block text-sm font-bold mb-2">Asignar Encargado:</label>
+            {/* Asignación */}
+            <div>
+              <SectionTitle icon={Shield} text="Asignación Operativa" />
+              <div style={{ marginTop: '12px', background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-600)', marginBottom: '8px', fontFamily: "'DM Sans', sans-serif" }}>
+                  Encargado Responsable
+                </label>
                 <select 
-                  className="w-full border p-2 rounded focus:outline-none focus:ring-2 focus:ring-primary"
-                  value={encargado}
-                  onChange={(e) => setEncargado(e.target.value)}
+                  value={encargado} 
+                  onChange={(e) => setEncargado(e.target.value)} 
+                  style={selectStyle}
+                  onFocus={e => { e.target.style.borderColor = 'var(--capyme-blue-mid)'; e.target.style.boxShadow = '0 0 0 3px rgba(43,91,166,0.12)'; }} 
+                  onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }}
                 >
-                  <option value="">Seleccione un encargado...</option>
-                  <option value="1">Admin / Líder (Autoasignación)</option>
-                  <option value="2">Carlos (Colaborador)</option>
-                  <option value="3">María (Colaborador)</option>
+                  <option value="">-- Seleccionar Encargado --</option>
+                  <option value="1">Administrador General</option>
+                  {/* Aquí mapearías a tus colaboradores de la base de datos */}
                 </select>
               </div>
             </div>
+
           </div>
 
-          <div className="mt-6 flex justify-end gap-3 border-t pt-4">
-            <button type="button" onClick={onClose} className="px-4 py-2 border rounded hover:bg-gray-100">
+          <div style={{ padding: '16px 24px', background: 'var(--gray-50)', borderTop: '1px solid var(--border)', borderRadius: '0 0 var(--radius-lg) var(--radius-lg)', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+            <button type="button" onClick={onClose} style={{ padding: '9px 24px', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', background: '#fff', color: 'var(--gray-700)', fontSize: '14px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", cursor: 'pointer', transition: 'all 150ms ease' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-100)'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
               Cancelar
             </button>
-            <button type="submit" className="px-4 py-2 bg-primary text-white rounded hover:bg-opacity-90">
+            <button type="submit" style={{ padding: '9px 24px', border: 'none', borderRadius: 'var(--radius-md)', background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', color: '#fff', fontSize: '14px', fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif", cursor: 'pointer', boxShadow: '0 2px 8px rgba(31,78,158,0.28)', transition: 'all 150ms ease' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
               Guardar Cambios
             </button>
           </div>
         </form>
+
       </div>
     </div>
   );

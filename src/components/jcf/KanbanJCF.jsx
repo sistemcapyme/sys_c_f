@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { User, Briefcase } from 'lucide-react';
 
 const KanbanJCF = ({ aprendices, onActualizarEstado, onVerDetalle }) => {
+  const [hoveredCard, setHoveredCard] = useState(null);
+
   const columnas = [
-    { id: 'PENDIENTE', titulo: 'Por Postular', bgHeader: 'bg-gray-50', textHeader: 'text-gray-600' },
-    { id: 'EN_PROCESO', titulo: 'En Proceso', bgHeader: 'bg-blue-50', textHeader: 'text-blue-800' },
-    { id: 'POSTULADO', titulo: 'Postulado', bgHeader: 'bg-green-50', textHeader: 'text-green-800' }
+    { id: 'PENDIENTE', titulo: 'Por Postular', headerBg: '#FEF2F2', headerColor: '#DC2626', borderColor: '#FECACA' },
+    { id: 'EN_PROCESO', titulo: 'En Proceso', headerBg: '#FFFBEB', headerColor: '#D97706', borderColor: '#FDE68A' },
+    { id: 'POSTULADO', titulo: 'Postulado', headerBg: '#F0FDF4', headerColor: '#16A34A', borderColor: '#BBF7D0' }
   ];
 
   const handleDragStart = (e, id) => {
@@ -24,58 +27,60 @@ const KanbanJCF = ({ aprendices, onActualizarEstado, onVerDetalle }) => {
   };
 
   return (
-    <div className="flex gap-4 p-4 min-h-[500px] overflow-x-auto">
+    <div style={{ display: 'flex', gap: '20px', minHeight: '600px', overflowX: 'auto', paddingBottom: '10px' }}>
       {columnas.map(col => (
         <div 
           key={col.id}
-          className="flex-1 min-w-[300px] bg-gray-50/50 border border-gray-100 rounded-lg flex flex-col"
           onDrop={(e) => handleDrop(e, col.id)}
           onDragOver={handleDragOver}
+          style={{ 
+            flex: '1', minWidth: '300px', background: 'var(--gray-50)', 
+            border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', 
+            display: 'flex', flexDirection: 'column', overflow: 'hidden'
+          }}
         >
-          <div className={`p-3 border-b border-gray-200 rounded-t-lg ${col.bgHeader}`}>
-            <h3 className={`font-semibold text-sm uppercase tracking-wider ${col.textHeader}`}>
-              {col.titulo} ({aprendices.filter(a => a.estado_kanban === col.id).length})
+          <div style={{ background: col.headerBg, borderBottom: `1px solid ${col.borderColor}`, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '14px', fontWeight: 800, color: col.headerColor, margin: 0 }}>
+              {col.titulo}
             </h3>
+            <span style={{ background: '#fff', color: col.headerColor, fontSize: '12px', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', border: `1px solid ${col.borderColor}` }}>
+              {aprendices.filter(a => a.estado_kanban === col.id).length}
+            </span>
           </div>
-          <div className="p-3 flex flex-col gap-3 flex-1 overflow-y-auto">
+
+          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, overflowY: 'auto' }}>
             {aprendices.filter(a => a.estado_kanban === col.id).map(aprendiz => (
               <div
                 key={aprendiz.id}
                 draggable
                 onDragStart={(e) => handleDragStart(e, aprendiz.id)}
                 onClick={() => onVerDetalle(aprendiz)}
-                className="bg-white p-4 rounded shadow-sm border border-gray-200 cursor-pointer hover:border-blue-400 hover:shadow transition-all"
+                onMouseEnter={() => setHoveredCard(aprendiz.id)}
+                onMouseLeave={() => setHoveredCard(null)}
+                style={{ 
+                  background: '#fff', border: '1px solid', 
+                  borderColor: hoveredCard === aprendiz.id ? 'var(--capyme-blue-mid)' : 'var(--border)', 
+                  borderRadius: 'var(--radius-md)', padding: '16px', 
+                  boxShadow: hoveredCard === aprendiz.id ? '0 4px 12px rgba(0,0,0,0.08)' : 'var(--shadow-sm)', 
+                  cursor: 'grab', transition: 'all 150ms ease', transform: hoveredCard === aprendiz.id ? 'translateY(-2px)' : 'translateY(0)'
+                }}
               >
-                <div className="flex justify-between items-start mb-2">
-                  <p className="font-semibold text-gray-800 text-sm">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <User style={{ width: '14px', height: '14px', color: 'var(--capyme-blue-mid)' }} />
+                  <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '14px', fontWeight: 700, color: 'var(--gray-900)', margin: 0 }}>
                     {aprendiz.nombre} {aprendiz.apellido}
                   </p>
-                  <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">
-                    {aprendiz.curp?.substring(0, 4)}...
-                  </span>
                 </div>
-                <p className="text-xs text-gray-500 mb-2 truncate">
-                  Negocio: {aprendiz.negocio?.nombreNegocio || 'Sin asignar'}
-                </p>
-                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
-                  <div className="h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-800 text-xs font-bold">
-                    {aprendiz.encargado?.nombre?.charAt(0) || '?'}
+                {aprendiz.negocio && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Briefcase style={{ width: '13px', height: '13px', color: 'var(--gray-400)' }} />
+                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: 'var(--gray-500)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {aprendiz.negocio.nombreNegocio}
+                    </p>
                   </div>
-                  <p className="text-xs text-gray-600 truncate">
-                    {aprendiz.encargado ? `${aprendiz.encargado.nombre}` : 'Sin encargado'}
-                  </p>
-                </div>
+                )}
               </div>
             ))}
-            
-            {aprendices.filter(a => a.estado_kanban === col.id).length === 0 && (
-              <div className="flex flex-col items-center justify-center h-32 text-gray-400">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                </svg>
-                <span className="text-xs">No hay tarjetas</span>
-              </div>
-            )}
           </div>
         </div>
       ))}
