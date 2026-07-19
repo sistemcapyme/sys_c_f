@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import AdminLiderDashboard from './AdminLiderDashboard';
-import EncargadoDashboard from './EncargadoDashboard';
+import AdminLiderDashboard from '../components/jcf/AdminLiderDashboard'; 
+import EncargadoDashboard from '../components/jcf/EncargadoDashboard';
 import Layout from '../components/common/Layout';
 import { jcfService } from '../services/jcfService';
 
