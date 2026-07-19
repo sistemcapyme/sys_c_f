@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import { Briefcase, Plus, Users, CheckCircle, Clock } from 'lucide-react';
 import KanbanJCF from './KanbanJCF';
 import ModalAprendiz from './ModalAprendiz';
+import ModalGestionRolesJCF from './ModalGestionRolesJCF';
 
 const AdminLiderDashboard = ({ user, aprendices, onActualizarEstado }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [aprendizSeleccionado, setAprendizSeleccionado] = useState(null);
+  
+  const [modalRolesConfig, setModalRolesConfig] = useState({ show: false, rol: '', titulo: '' });
 
   const abrirModal = (aprendiz) => {
     setAprendizSeleccionado(aprendiz);
@@ -28,7 +31,7 @@ const AdminLiderDashboard = ({ user, aprendices, onActualizarEstado }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
-      {/* Header */}
+      
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
         <div>
           <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '26px', fontWeight: 800, color: 'var(--gray-900)', letterSpacing: '-0.02em', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -42,13 +45,23 @@ const AdminLiderDashboard = ({ user, aprendices, onActualizarEstado }) => {
         
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           {user.rol === 'admin' && (
-            <button style={btnOutlineStyle} onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-50)'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
+            <button 
+              onClick={() => setModalRolesConfig({ show: true, rol: 'lider_jcf', titulo: 'Líderes JCF' })}
+              style={btnOutlineStyle} 
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-50)'} 
+              onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+            >
               <Users style={{ width: '16px', height: '16px' }} /> Líderes JCF
             </button>
           )}
           {['admin', 'lider_jcf'].includes(user.rol) && (
             <>
-              <button style={btnOutlineStyle} onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-50)'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
+              <button 
+                onClick={() => setModalRolesConfig({ show: true, rol: 'encargado_jcf', titulo: 'Encargados JCF' })}
+                style={btnOutlineStyle} 
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-50)'} 
+                onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+              >
                 <Users style={{ width: '16px', height: '16px' }} /> Encargados JCF
               </button>
               <button style={btnOutlineStyle} onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-50)'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
@@ -62,7 +75,6 @@ const AdminLiderDashboard = ({ user, aprendices, onActualizarEstado }) => {
         </div>
       </div>
 
-      {/* Stats */}
       <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
         <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '20px', boxShadow: 'var(--shadow-sm)', flex: 1, display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -89,7 +101,6 @@ const AdminLiderDashboard = ({ user, aprendices, onActualizarEstado }) => {
         </div>
       </div>
 
-      {/* Kanban */}
       <KanbanJCF 
         aprendices={aprendices} 
         onActualizarEstado={onActualizarEstado} 
@@ -102,6 +113,12 @@ const AdminLiderDashboard = ({ user, aprendices, onActualizarEstado }) => {
           onClose={() => setModalOpen(false)} 
         />
       )}
+
+      <ModalGestionRolesJCF 
+        config={modalRolesConfig} 
+        onClose={() => setModalRolesConfig({ show: false, rol: '', titulo: '' })} 
+      />
+
     </div>
   );
 };
