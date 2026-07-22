@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Layout from '../components/common/Layout';
+import Layout from '../common/Layout'; // <-- Ruta corregida
 import { Users, Plus, ArrowLeft, Mail, Shield } from 'lucide-react';
 
 const AdminLiderDashboard = () => {
