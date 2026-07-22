@@ -1,124 +1,92 @@
 import React, { useState } from 'react';
-import { Briefcase, Plus, Users, CheckCircle, Clock } from 'lucide-react';
-import KanbanJCF from './KanbanJCF';
-import ModalAprendiz from './ModalAprendiz';
-import ModalGestionRolesJCF from './ModalGestionRolesJCF';
 
-const AdminLiderDashboard = ({ user, aprendices, onActualizarEstado }) => {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [aprendizSeleccionado, setAprendizSeleccionado] = useState(null);
-  
-  const [modalRolesConfig, setModalRolesConfig] = useState({ show: false, rol: '', titulo: '' });
+const AdminLiderDashboard = () => {
+  const [vistaActual, setVistaActual] = useState('menu');
+  const [usuariosLideres, setUsuariosLideres] = useState([
+    { id: 1, nombre: 'Ejemplo Líder', correo: 'lider@ejemplo.com', estado: 'Activo' }
+  ]);
 
-  const abrirModal = (aprendiz) => {
-    setAprendizSeleccionado(aprendiz);
-    setModalOpen(true);
-  };
-
-  const btnStyle = {
-    display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', 
-    background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', 
-    color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', 
-    fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '14px', fontWeight: 600, 
-    cursor: 'pointer', boxShadow: '0 2px 8px rgba(31,78,158,0.28)', transition: 'all 200ms ease', whiteSpace: 'nowrap'
-  };
-
-  const btnOutlineStyle = {
-    ...btnStyle,
-    background: '#fff', color: 'var(--capyme-blue-mid)', 
-    border: '1px solid var(--capyme-blue-mid)', boxShadow: 'none'
-  };
+  if (vistaActual === 'crud') {
+    return (
+      <div className="p-8 w-full">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">Usuarios Líderes</h2>
+          <div>
+            <button 
+              onClick={() => setVistaActual('menu')} 
+              className="mr-4 bg-gray-500 text-white px-4 py-2 rounded shadow hover:bg-gray-600 transition"
+            >
+              Volver al Inicio
+            </button>
+            <button className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition">
+              Nuevo Usuario Líder
+            </button>
+          </div>
+        </div>
+        <div className="overflow-x-auto bg-white rounded-lg shadow">
+          <table className="min-w-full leading-normal">
+            <thead>
+              <tr>
+                <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  ID
+                </th>
+                <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Nombre
+                </th>
+                <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Correo
+                </th>
+                <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Estado
+                </th>
+                <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {usuariosLideres.map((usuario) => (
+                <tr key={usuario.id}>
+                  <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                    <p className="text-gray-900 whitespace-no-wrap">{usuario.id}</p>
+                  </td>
+                  <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                    <p className="text-gray-900 whitespace-no-wrap">{usuario.nombre}</p>
+                  </td>
+                  <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                    <p className="text-gray-900 whitespace-no-wrap">{usuario.correo}</p>
+                  </td>
+                  <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                    <span className="relative inline-block px-3 py-1 font-semibold text-green-900 leading-tight">
+                      <span aria-hidden className="absolute inset-0 bg-green-200 opacity-50 rounded-full"></span>
+                      <span className="relative">{usuario.estado}</span>
+                    </span>
+                  </td>
+                  <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm text-center">
+                    <button className="bg-yellow-500 text-white px-3 py-1 rounded shadow hover:bg-yellow-600 transition">
+                      Editar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
-      
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-        <div>
-          <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '26px', fontWeight: 800, color: 'var(--gray-900)', letterSpacing: '-0.02em', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Briefcase style={{ width: '28px', height: '28px', color: 'var(--capyme-blue-mid)' }} />
-            Jóvenes Construyendo el Futuro
-          </h1>
-          <p style={{ fontSize: '14px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif" }}>
-            Gestión de postulaciones y seguimiento de aprendices
-          </p>
-        </div>
-        
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          {user.rol === 'admin' && (
-            <button 
-              onClick={() => setModalRolesConfig({ show: true, rol: 'lider_jcf', titulo: 'Líderes JCF' })}
-              style={btnOutlineStyle} 
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-50)'} 
-              onMouseLeave={e => e.currentTarget.style.background = '#fff'}
-            >
-              <Users style={{ width: '16px', height: '16px' }} /> Líderes JCF
-            </button>
-          )}
-          {['admin', 'lider_jcf'].includes(user.rol) && (
-            <>
-              <button 
-                onClick={() => setModalRolesConfig({ show: true, rol: 'encargado_jcf', titulo: 'Encargados JCF' })}
-                style={btnOutlineStyle} 
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-50)'} 
-                onMouseLeave={e => e.currentTarget.style.background = '#fff'}
-              >
-                <Users style={{ width: '16px', height: '16px' }} /> Encargados JCF
-              </button>
-              <button style={btnOutlineStyle} onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-50)'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
-                <Briefcase style={{ width: '16px', height: '16px' }} /> Negocios JCF
-              </button>
-            </>
-          )}
-          <button style={btnStyle} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
-            <Plus style={{ width: '16px', height: '16px' }} /> Nuevo Aprendiz
-          </button>
-        </div>
+    <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-gray-50">
+      <h1 className="text-3xl font-bold mb-10 text-gray-800">Dashboard Líder JCF</h1>
+      <div className="w-full max-w-md">
+        <button
+          onClick={() => setVistaActual('crud')}
+          className="w-full bg-blue-600 text-white font-bold py-6 px-4 rounded-xl shadow-lg hover:bg-blue-700 hover:shadow-xl transition duration-300 text-xl"
+        >
+          Usuarios Líderes
+        </button>
       </div>
-
-      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-        <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '20px', boxShadow: 'var(--shadow-sm)', flex: 1, display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <CheckCircle style={{ width: '24px', height: '24px', color: '#16A34A' }} />
-          </div>
-          <div>
-            <h3 style={{ fontSize: '13px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif", fontWeight: 600, margin: 0 }}>Postulaciones Completadas</h3>
-            <p style={{ fontSize: '24px', fontWeight: 800, fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--gray-900)', margin: '2px 0 0 0' }}>
-              {aprendices.filter(a => a.estado_kanban === 'POSTULADO').length}
-            </p>
-          </div>
-        </div>
-        
-        <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '20px', boxShadow: 'var(--shadow-sm)', flex: 1, display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#FFFBEB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Clock style={{ width: '24px', height: '24px', color: '#D97706' }} />
-          </div>
-          <div>
-            <h3 style={{ fontSize: '13px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif", fontWeight: 600, margin: 0 }}>Postulaciones Pendientes</h3>
-            <p style={{ fontSize: '24px', fontWeight: 800, fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--gray-900)', margin: '2px 0 0 0' }}>
-              {aprendices.filter(a => a.estado_kanban !== 'POSTULADO').length}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <KanbanJCF 
-        aprendices={aprendices} 
-        onActualizarEstado={onActualizarEstado} 
-        onVerDetalle={abrirModal} 
-      />
-
-      {modalOpen && (
-        <ModalAprendiz 
-          aprendiz={aprendizSeleccionado} 
-          onClose={() => setModalOpen(false)} 
-        />
-      )}
-
-      <ModalGestionRolesJCF 
-        config={modalRolesConfig} 
-        onClose={() => setModalRolesConfig({ show: false, rol: '', titulo: '' })} 
-      />
-
     </div>
   );
 };
