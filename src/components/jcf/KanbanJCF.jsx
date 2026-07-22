@@ -5,8 +5,8 @@ const KanbanJCF = ({ aprendices, onActualizarEstado, onVerDetalle }) => {
   const [hoveredCard, setHoveredCard] = useState(null);
 
   const columnas = [
-    { id: 'PENDIENTE', titulo: 'Por Postular', headerBg: '#FEF2F2', headerColor: '#DC2626', borderColor: '#FECACA' },
-    { id: 'EN_PROCESO', titulo: 'En Proceso', headerBg: '#FFFBEB', headerColor: '#D97706', borderColor: '#FDE68A' },
+    { id: 'INICIADO', titulo: 'Iniciado', headerBg: '#FEF2F2', headerColor: '#DC2626', borderColor: '#FECACA' },
+    { id: 'PROCESO', titulo: 'Proceso', headerBg: '#FFFBEB', headerColor: '#D97706', borderColor: '#FDE68A' },
     { id: 'POSTULADO', titulo: 'Postulado', headerBg: '#F0FDF4', headerColor: '#16A34A', borderColor: '#BBF7D0' }
   ];
 
@@ -44,12 +44,12 @@ const KanbanJCF = ({ aprendices, onActualizarEstado, onVerDetalle }) => {
               {col.titulo}
             </h3>
             <span style={{ background: '#fff', color: col.headerColor, fontSize: '12px', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', border: `1px solid ${col.borderColor}` }}>
-              {aprendices.filter(a => a.estado_kanban === col.id).length}
+              {aprendices.filter(a => a.estadoKanban === col.id || a.estado_kanban === col.id).length}
             </span>
           </div>
 
           <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, overflowY: 'auto' }}>
-            {aprendices.filter(a => a.estado_kanban === col.id).map(aprendiz => (
+            {aprendices.filter(a => a.estadoKanban === col.id || a.estado_kanban === col.id).map(aprendiz => (
               <div
                 key={aprendiz.id}
                 draggable
