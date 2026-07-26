@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { X, Briefcase, User, MapPin, ExternalLink, Shield, ArrowRight, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Briefcase, User, MapPin, ExternalLink, Shield, CheckCircle, XCircle } from 'lucide-react';
+import { jcfService } from '../../services/jcfService';
 
 const SectionTitle = ({ icon: Icon, text }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '4px' }}>
@@ -30,27 +31,40 @@ const InfoRow = ({ label, value, icon: Icon, isLink }) => (
 );
 
 const ModalAprendiz = ({ aprendiz, onClose, onAsignarEncargado, onActualizarEstado }) => {
-  const [encargado, setEncargado] = useState(aprendiz?.encargadoId || '');
+  const [encargado, setEncargado] = useState(aprendiz?.encargado_id || '');
+  const [lideres, setLideres] = useState([]);
+
+  useEffect(() => {
+    const fetchLideres = async () => {
+      try {
+        const res = await jcfService.obtenerLideres();
+        if (res.success) setLideres(res.data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchLideres();
+  }, []);
 
   if (!aprendiz) return null;
 
-  const estadoActual = aprendiz.estadoKanban || aprendiz.estado_kanban || 'INICIADO';
+  const estadoActual = aprendiz.estado_kanban || 'PENDIENTE';
 
   const guardarAsignacion = () => {
-    if (onAsignarEncargado && encargado !== aprendiz.encargadoId) {
+    if (onAsignarEncargado && encargado !== aprendiz.encargado_id) {
       onAsignarEncargado(aprendiz.id, encargado);
     }
   };
 
-  const handleAvanzarProceso = () => {
+  const handleAprobar = () => {
     guardarAsignacion();
-    onActualizarEstado(aprendiz.id, 'PROCESO');
+    onActualizarEstado(aprendiz.id, 'APROBADO');
     onClose();
   };
 
-  const handleJovenPostulado = () => {
+  const handleRechazar = () => {
     guardarAsignacion();
-    onActualizarEstado(aprendiz.id, 'POSTULADO');
+    onActualizarEstado(aprendiz.id, 'RECHAZADO');
     onClose();
   };
 
@@ -89,17 +103,18 @@ const ModalAprendiz = ({ aprendiz, onClose, onAsignarEncargado, onActualizarEsta
                 <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--gray-50)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
                   <InfoRow label="Nombre Completo" value={`${aprendiz.nombre} ${aprendiz.apellido}`} />
                   <InfoRow label="CURP" value={aprendiz.curp} />
+                  <InfoRow label="Correo" value={aprendiz.correo} />
                   <InfoRow label="Teléfono" value={aprendiz.telefono} />
-                  <InfoRow label="Documentos (Drive)" value={aprendiz.urlRecurso} isLink={true} />
+                  <InfoRow label="Documentos (Drive)" value={aprendiz.url_recurso} isLink={true} />
                 </div>
               </div>
 
               <div>
                 <SectionTitle icon={Briefcase} text="Datos del Negocio" />
                 <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--gray-50)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
-                  <InfoRow label="Razón Social / Nombre" value={aprendiz.negocio?.nombreNegocio} />
-                  <InfoRow label="Encargado del Negocio" value={aprendiz.negocio?.usuario ? `${aprendiz.negocio.usuario.nombre} ${aprendiz.negocio.usuario.apellido}` : ''} icon={User} />
-                  <InfoRow label="Dirección" value={aprendiz.negocio?.direccion} icon={MapPin} />
+                  <InfoRow label="Razón Social / Nombre" value={aprendiz.negocio?.nombre_negocio} />
+                  <InfoRow label="Ubicación" value={aprendiz.negocio ? `${aprendiz.negocio.ciudad}, ${aprendiz.negocio.estado}` : ''} icon={MapPin} />
+                  <InfoRow label="Dirección Exacta" value={aprendiz.negocio?.direccion} icon={MapPin} />
                 </div>
               </div>
 
@@ -109,7 +124,7 @@ const ModalAprendiz = ({ aprendiz, onClose, onAsignarEncargado, onActualizarEsta
               <SectionTitle icon={Shield} text="Asignación Operativa" />
               <div style={{ marginTop: '12px', background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-600)', marginBottom: '8px', fontFamily: "'DM Sans', sans-serif" }}>
-                  Usuario asignado para postular
+                  Usuario asignado para el seguimiento
                 </label>
                 <select 
                   value={encargado} 
@@ -119,7 +134,11 @@ const ModalAprendiz = ({ aprendiz, onClose, onAsignarEncargado, onActualizarEsta
                   onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }}
                 >
                   <option value="">-- Seleccionar Encargado --</option>
-                  <option value="1">Admin General</option>
+                  {lideres.map(lider => (
+                    <option key={lider.id} value={lider.id}>
+                      {lider.nombre} {lider.apellido} ({lider.email})
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -128,18 +147,18 @@ const ModalAprendiz = ({ aprendiz, onClose, onAsignarEncargado, onActualizarEsta
 
           <div style={{ padding: '16px 24px', background: 'var(--gray-50)', borderTop: '1px solid var(--border)', borderRadius: '0 0 var(--radius-lg) var(--radius-lg)', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
             <button onClick={onClose} style={{ padding: '9px 24px', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', background: '#fff', color: 'var(--gray-700)', fontSize: '14px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", cursor: 'pointer', transition: 'all 150ms ease' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-100)'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
-              Quitar Modal
+              Cerrar
             </button>
 
-            {estadoActual === 'INICIADO' && (
-              <button onClick={handleAvanzarProceso} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 24px', border: 'none', borderRadius: 'var(--radius-md)', background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#fff', fontSize: '14px', fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif", cursor: 'pointer', boxShadow: '0 2px 8px rgba(245,158,11,0.28)', transition: 'all 150ms ease' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
-                Avanzar Proceso <ArrowRight style={{ width: '16px', height: '16px' }} />
+            {estadoActual === 'PENDIENTE' && (
+              <button onClick={handleRechazar} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 24px', border: 'none', borderRadius: 'var(--radius-md)', background: 'linear-gradient(135deg, #EF4444, #DC2626)', color: '#fff', fontSize: '14px', fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif", cursor: 'pointer', boxShadow: '0 2px 8px rgba(239,68,68,0.28)', transition: 'all 150ms ease' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                Rechazar <XCircle style={{ width: '16px', height: '16px' }} />
               </button>
             )}
 
-            {estadoActual === 'PROCESO' && (
-              <button onClick={handleJovenPostulado} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 24px', border: 'none', borderRadius: 'var(--radius-md)', background: 'linear-gradient(135deg, #10B981, #059669)', color: '#fff', fontSize: '14px', fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif", cursor: 'pointer', boxShadow: '0 2px 8px rgba(16,185,129,0.28)', transition: 'all 150ms ease' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
-                Joven Postulado <CheckCircle style={{ width: '16px', height: '16px' }} />
+            {(estadoActual === 'PENDIENTE' || estadoActual === 'RECHAZADO') && (
+              <button onClick={handleAprobar} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '9px 24px', border: 'none', borderRadius: 'var(--radius-md)', background: 'linear-gradient(135deg, #10B981, #059669)', color: '#fff', fontSize: '14px', fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif", cursor: 'pointer', boxShadow: '0 2px 8px rgba(16,185,129,0.28)', transition: 'all 150ms ease' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                Aprobar Postulación <CheckCircle style={{ width: '16px', height: '16px' }} />
               </button>
             )}
           </div>

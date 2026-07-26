@@ -1,91 +1,108 @@
-import React, { useState } from 'react';
-import { User, Briefcase } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { jcfService } from '../../services/jcfService';
+import ModalAprendiz from './ModalAprendiz';
 
-const KanbanJCF = ({ aprendices, onActualizarEstado, onVerDetalle }) => {
-  const [hoveredCard, setHoveredCard] = useState(null);
+const COLUMNAS = [
+  { id: 'PENDIENTE', titulo: 'Pendiente' },
+  { id: 'APROBADO', titulo: 'Aprobado' },
+  { id: 'RECHAZADO', titulo: 'Rechazado' }
+];
 
-  const columnas = [
-    { id: 'INICIADO', titulo: 'Iniciado', headerBg: '#FEF2F2', headerColor: '#DC2626', borderColor: '#FECACA' },
-    { id: 'PROCESO', titulo: 'Proceso', headerBg: '#FFFBEB', headerColor: '#D97706', borderColor: '#FDE68A' },
-    { id: 'POSTULADO', titulo: 'Postulado', headerBg: '#F0FDF4', headerColor: '#16A34A', borderColor: '#BBF7D0' }
-  ];
+export default function KanbanJCF() {
+  const [aprendices, setAprendices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [aprendizSeleccionado, setAprendizSeleccionado] = useState(null);
 
-  const handleDragStart = (e, id) => {
-    e.dataTransfer.setData('aprendizId', id);
-  };
+  useEffect(() => {
+    cargarAprendices();
+  }, []);
 
-  const handleDrop = (e, estadoDestino) => {
-    e.preventDefault();
-    const aprendizId = e.dataTransfer.getData('aprendizId');
-    if (aprendizId) {
-      onActualizarEstado(parseInt(aprendizId), estadoDestino);
+  const cargarAprendices = async () => {
+    try {
+      setLoading(true);
+      const data = await jcfService.obtenerAprendices();
+      setAprendices(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
+  const handleCambiarEstado = async (id, nuevoEstado) => {
+    try {
+      await jcfService.actualizarEstado(id, nuevoEstado);
+      setAprendices(prev =>
+        prev.map(a => (a.id === id ? { ...a, estado_kanban: nuevoEstado } : a))
+      );
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  return (
-    <div style={{ display: 'flex', gap: '20px', minHeight: '600px', overflowX: 'auto', paddingBottom: '10px' }}>
-      {columnas.map(col => (
-        <div 
-          key={col.id}
-          onDrop={(e) => handleDrop(e, col.id)}
-          onDragOver={handleDragOver}
-          style={{ 
-            flex: '1', minWidth: '300px', background: 'var(--gray-50)', 
-            border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', 
-            display: 'flex', flexDirection: 'column', overflow: 'hidden'
-          }}
-        >
-          <div style={{ background: col.headerBg, borderBottom: `1px solid ${col.borderColor}`, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '14px', fontWeight: 800, color: col.headerColor, margin: 0 }}>
-              {col.titulo}
-            </h3>
-            <span style={{ background: '#fff', color: col.headerColor, fontSize: '12px', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', border: `1px solid ${col.borderColor}` }}>
-              {aprendices.filter(a => a.estadoKanban === col.id || a.estado_kanban === col.id).length}
-            </span>
-          </div>
+  const handleAsignarEncargado = async (id, encargadoId) => {
+    try {
+      await jcfService.asignarEncargado(id, encargadoId);
+      cargarAprendices();
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, overflowY: 'auto' }}>
-            {aprendices.filter(a => a.estadoKanban === col.id || a.estado_kanban === col.id).map(aprendiz => (
-              <div
-                key={aprendiz.id}
-                draggable
-                onDragStart={(e) => handleDragStart(e, aprendiz.id)}
-                onClick={() => onVerDetalle(aprendiz)}
-                onMouseEnter={() => setHoveredCard(aprendiz.id)}
-                onMouseLeave={() => setHoveredCard(null)}
-                style={{ 
-                  background: '#fff', border: '1px solid', 
-                  borderColor: hoveredCard === aprendiz.id ? 'var(--capyme-blue-mid)' : 'var(--border)', 
-                  borderRadius: 'var(--radius-md)', padding: '16px', 
-                  boxShadow: hoveredCard === aprendiz.id ? '0 4px 12px rgba(0,0,0,0.08)' : 'var(--shadow-sm)', 
-                  cursor: 'grab', transition: 'all 150ms ease', transform: hoveredCard === aprendiz.id ? 'translateY(-2px)' : 'translateY(0)'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                  <User style={{ width: '14px', height: '14px', color: 'var(--capyme-blue-mid)' }} />
-                  <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '14px', fontWeight: 700, color: 'var(--gray-900)', margin: 0 }}>
-                    {aprendiz.nombre} {aprendiz.apellido}
-                  </p>
-                </div>
-                {aprendiz.negocio && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Briefcase style={{ width: '13px', height: '13px', color: 'var(--gray-400)' }} />
-                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: 'var(--gray-500)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {aprendiz.negocio.nombreNegocio}
-                    </p>
+  if (loading) return <div className="p-6 text-center">Cargando tablero...</div>;
+
+  return (
+    <div className="p-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {COLUMNAS.map(col => (
+          <div key={col.id} className="bg-gray-100 rounded-lg p-4 min-h-[500px]">
+            <h3 className="font-bold text-gray-700 mb-4 text-center border-b border-gray-300 pb-2">
+              {col.titulo} ({aprendices.filter(a => a.estado_kanban === col.id).length})
+            </h3>
+            
+            <div className="space-y-4">
+              {aprendices
+                .filter(a => a.estado_kanban === col.id)
+                .map(item => (
+                  <div
+                    key={item.id}
+                    className="bg-white p-4 rounded shadow hover:shadow-md transition cursor-pointer border-l-4 border-blue-600"
+                  >
+                    <div onClick={() => setAprendizSeleccionado(item)}>
+                      <p className="font-semibold text-gray-800">{item.nombre} {item.apellido}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        📍 Negocio: {item.negocio?.nombre_negocio || 'Sin asignar'}
+                      </p>
+                      <p className="text-xs text-blue-600 mt-1">
+                        👤 Encargado ID: {item.encargado_id || 'Pendiente'}
+                      </p>
+                    </div>
+                    <div className="mt-3 flex justify-between gap-2 border-t pt-2">
+                      {COLUMNAS.filter(c => c.id !== col.id).map(btnCol => (
+                        <button
+                          key={btnCol.id}
+                          onClick={(e) => { e.stopPropagation(); handleCambiarEstado(item.id, btnCol.id); }}
+                          className="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded text-gray-700 w-full"
+                        >
+                          Mover a {btnCol.titulo}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                )}
-              </div>
-            ))}
+                ))}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
+
+      {aprendizSeleccionado && (
+        <ModalAprendiz
+          aprendiz={aprendizSeleccionado}
+          onClose={() => setAprendizSeleccionado(null)}
+          onActualizarEstado={handleCambiarEstado}
+          onAsignarEncargado={handleAsignarEncargado}
+        />
+      )}
     </div>
   );
-};
-
-export default KanbanJCF;
+}

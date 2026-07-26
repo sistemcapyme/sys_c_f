@@ -1,13 +1,29 @@
-import React, { useState } from 'react';
-import Layout from '../common/Layout'; // <-- Ruta corregida
+import React, { useState, useEffect } from 'react';
+import Layout from '../common/Layout';
 import { Users, Plus, ArrowLeft, Mail, Shield } from 'lucide-react';
+import { jcfService } from '../../services/jcfService';
 
 const AdminLiderDashboard = () => {
   const [vistaActual, setVistaActual] = useState('menu');
-  const [usuariosLideres, setUsuariosLideres] = useState([
-    { id: 1, nombre: 'Ejemplo Líder', correo: 'lider@ejemplo.com', estado: 'Activo' }
-  ]);
+  const [usuariosLideres, setUsuariosLideres] = useState([]);
   const [hoveredRow, setHoveredRow] = useState(null);
+
+  useEffect(() => {
+    if (vistaActual === 'crud') {
+      cargarLideres();
+    }
+  }, [vistaActual]);
+
+  const cargarLideres = async () => {
+    try {
+      const res = await jcfService.obtenerLideres();
+      if (res.success) {
+        setUsuariosLideres(res.data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const btnStyle = {
     display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', 
@@ -22,7 +38,6 @@ const AdminLiderDashboard = () => {
       <Layout>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
           
-          {/* Header */}
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
             <div>
               <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '26px', fontWeight: 800, color: 'var(--gray-900)', letterSpacing: '-0.02em', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -52,7 +67,6 @@ const AdminLiderDashboard = () => {
             </div>
           </div>
 
-          {/* Tabla */}
           <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -79,23 +93,23 @@ const AdminLiderDashboard = () => {
                       <td style={{ padding: '14px 24px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <div style={{ width: '38px', height: '38px', borderRadius: 'var(--radius-md)', background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '13px', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", flexShrink: 0 }}>
-                            {usuario.nombre?.charAt(0)?.toUpperCase()}{usuario.nombre?.split(' ')[1]?.charAt(0)?.toUpperCase()}
+                            {usuario.nombre?.charAt(0)?.toUpperCase()}{usuario.apellido?.charAt(0)?.toUpperCase()}
                           </div>
                           <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--gray-800)', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>
-                            {usuario.nombre}
+                            {usuario.nombre} {usuario.apellido}
                           </p>
                         </div>
                       </td>
                       <td style={{ padding: '14px 24px' }}>
                         <p style={{ fontSize: '13px', color: 'var(--gray-700)', display: 'flex', alignItems: 'center', gap: '5px', margin: 0 }}>
                           <Mail style={{ width: '12px', height: '12px', color: 'var(--gray-400)' }} />
-                          {usuario.correo}
+                          {usuario.email}
                         </p>
                       </td>
                       <td style={{ padding: '14px 24px' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', borderRadius: 'var(--radius-sm)', fontSize: '12px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", background: '#ECFDF5', color: '#065F46' }}>
-                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
-                          {usuario.estado}
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', borderRadius: 'var(--radius-sm)', fontSize: '12px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", background: usuario.activo ? '#ECFDF5' : '#FEF2F2', color: usuario.activo ? '#065F46' : '#991B1B' }}>
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: usuario.activo ? '#10B981' : '#EF4444', display: 'inline-block' }} />
+                          {usuario.activo ? 'Activo' : 'Inactivo'}
                         </span>
                       </td>
                       <td style={{ padding: '14px 24px', textAlign: 'right' }}>
@@ -109,6 +123,13 @@ const AdminLiderDashboard = () => {
                       </td>
                     </tr>
                   ))}
+                  {usuariosLideres.length === 0 && (
+                    <tr>
+                      <td colSpan="5" style={{ padding: '24px', textAlign: 'center', color: 'var(--gray-500)', fontSize: '14px', fontFamily: "'DM Sans', sans-serif" }}>
+                        No hay líderes registrados.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
