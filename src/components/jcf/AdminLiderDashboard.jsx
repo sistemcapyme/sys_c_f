@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../common/Layout';
-import { Users, Plus, ArrowLeft, Mail, Shield } from 'lucide-react';
+import { Users, Plus, ArrowLeft, Mail, Shield, X, Save } from 'lucide-react';
 import { jcfService } from '../../services/jcfService';
 
 const AdminLiderDashboard = () => {
   const [vistaActual, setVistaActual] = useState('menu');
   const [usuariosLideres, setUsuariosLideres] = useState([]);
   const [hoveredRow, setHoveredRow] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState({
+    nombre: '',
+    apellido: '',
+    email: '',
+    password: '',
+    activo: true
+  });
 
   useEffect(() => {
     if (vistaActual === 'crud') {
@@ -25,12 +34,69 @@ const AdminLiderDashboard = () => {
     }
   };
 
+  const handleOpenModal = (lider = null) => {
+    if (lider) {
+      setFormData({
+        nombre: lider.nombre || '',
+        apellido: lider.apellido || '',
+        email: lider.email || '',
+        password: '',
+        activo: lider.activo
+      });
+      setEditingId(lider.id);
+    } else {
+      setFormData({
+        nombre: '',
+        apellido: '',
+        email: '',
+        password: '',
+        activo: true
+      });
+      setEditingId(null);
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingId(null);
+  };
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingId) {
+        console.log('Actualizando líder:', editingId, formData);
+      } else {
+        console.log('Creando nuevo líder:', formData);
+      }
+      handleCloseModal();
+      cargarLideres();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const btnStyle = {
     display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', 
     background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', 
     color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', 
     fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '14px', fontWeight: 600, 
     cursor: 'pointer', boxShadow: '0 2px 8px rgba(31,78,158,0.28)', transition: 'all 200ms ease'
+  };
+
+  const inputStyle = {
+    width: '100%', padding: '10px 12px', border: '1px solid var(--border)', 
+    borderRadius: 'var(--radius-md)', fontSize: '14px', fontFamily: "'DM Sans', sans-serif", 
+    color: 'var(--gray-900)', background: '#fff', outline: 'none'
   };
 
   if (vistaActual === 'crud') {
@@ -58,6 +124,7 @@ const AdminLiderDashboard = () => {
                 <ArrowLeft style={{ width: '16px', height: '16px' }} /> Volver
               </button>
               <button 
+                onClick={() => handleOpenModal()}
                 style={btnStyle}
                 onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
@@ -114,6 +181,7 @@ const AdminLiderDashboard = () => {
                       </td>
                       <td style={{ padding: '14px 24px', textAlign: 'right' }}>
                         <button 
+                          onClick={() => handleOpenModal(usuario)}
                           style={{ padding: '6px 14px', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', background: '#EEF4FF', color: 'var(--capyme-blue-mid)', fontSize: '12px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", cursor: 'pointer', transition: 'all 150ms ease' }}
                           onMouseEnter={e => { e.currentTarget.style.background = 'var(--capyme-blue-mid)'; e.currentTarget.style.color = '#fff'; }}
                           onMouseLeave={e => { e.currentTarget.style.background = '#EEF4FF'; e.currentTarget.style.color = 'var(--capyme-blue-mid)'; }}
@@ -135,6 +203,59 @@ const AdminLiderDashboard = () => {
             </div>
           </div>
         </div>
+
+        {isModalOpen && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+            <div style={{ background: '#fff', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: '500px', boxShadow: '0 20px 60px rgba(0,0,0,0.18)', overflow: 'hidden' }}>
+              <div style={{ padding: '20px 24px', background: 'var(--gray-50)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--gray-900)' }}>
+                  {editingId ? 'Editar Líder' : 'Nuevo Líder'}
+                </h2>
+                <button onClick={handleCloseModal} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-400)' }}>
+                  <X style={{ width: '20px', height: '20px' }} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif" }}>Nombre</label>
+                    <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} required style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif" }}>Apellido</label>
+                    <input type="text" name="apellido" value={formData.apellido} onChange={handleChange} required style={inputStyle} />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif" }}>Correo Electrónico</label>
+                  <input type="email" name="email" value={formData.email} onChange={handleChange} required style={inputStyle} />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif" }}>Contraseña {editingId && '(Dejar en blanco para no cambiar)'}</label>
+                  <input type="password" name="password" value={formData.password} onChange={handleChange} required={!editingId} style={inputStyle} />
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                  <input type="checkbox" name="activo" checked={formData.activo} onChange={handleChange} id="activoCheck" style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
+                  <label htmlFor="activoCheck" style={{ fontSize: '14px', color: 'var(--gray-700)', fontFamily: "'DM Sans', sans-serif", cursor: 'pointer' }}>Usuario Activo</label>
+                </div>
+
+                <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                  <button type="button" onClick={handleCloseModal} style={{ padding: '10px 20px', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', background: '#fff', color: 'var(--gray-700)', fontSize: '14px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", cursor: 'pointer' }}>
+                    Cancelar
+                  </button>
+                  <button type="submit" style={{ ...btnStyle, margin: 0 }}>
+                    <Save style={{ width: '16px', height: '16px' }} />
+                    {editingId ? 'Guardar Cambios' : 'Crear Líder'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </Layout>
     );
   }
