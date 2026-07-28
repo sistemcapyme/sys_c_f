@@ -75,14 +75,18 @@ const AdminLiderDashboard = () => {
     e.preventDefault();
     try {
       if (editingId) {
+        // Petición para editar (si la implementas en el futuro)
         await axios.put(`/jcf/lideres/${editingId}`, formData);
       } else {
+        // Petición POST real para crear el líder
         await axios.post('/jcf/lideres', formData);
       }
-      handleCloseModal();
-      cargarLideres();
+      
+      handleCloseModal(); // Cierra la ventana
+      cargarLideres();    // Vuelve a descargar la lista para que aparezca el nuevo
+      
     } catch (error) {
-      console.error(error);
+      console.error('Error al guardar el líder:', error);
     }
   };
 
