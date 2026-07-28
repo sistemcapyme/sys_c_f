@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../common/Layout';
 import { Users, Plus, ArrowLeft, Mail, Shield, X, Save } from 'lucide-react';
 import { jcfService } from '../../services/jcfService';
+import axios from '../../services/axios';
 
 const AdminLiderDashboard = () => {
   const [vistaActual, setVistaActual] = useState('menu');
@@ -74,9 +75,9 @@ const AdminLiderDashboard = () => {
     e.preventDefault();
     try {
       if (editingId) {
-        console.log('Actualizando líder:', editingId, formData);
+        await axios.put(`/jcf/lideres/${editingId}`, formData);
       } else {
-        console.log('Creando nuevo líder:', formData);
+        await axios.post('/jcf/lideres', formData);
       }
       handleCloseModal();
       cargarLideres();
