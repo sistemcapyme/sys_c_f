@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../common/Layout';
-import { Users, Plus, ArrowLeft, Mail, Shield, X, Save } from 'lucide-react';
+import { Users, Plus, ArrowLeft, Mail, Shield, X, Save, LayoutDashboard } from 'lucide-react';
 import { jcfService } from '../../services/jcfService';
 import axios from '../../services/axios';
 import { useNavigate } from 'react-router-dom';
@@ -301,6 +301,15 @@ const AdminLiderDashboard = () => {
           >
             <Users style={{ width: '20px', height: '20px' }} />
             Gestionar Encargados
+          </button>
+          <button
+            onClick={() => navigate('/jcf/kanban')}
+            style={{ width: '100%', padding: '16px', background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)', color: '#fff', border: 'none', borderRadius: 'var(--radius-lg)', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '16px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(139, 92, 246, 0.25)', transition: 'all 200ms ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            <LayoutDashboard style={{ width: '20px', height: '20px' }} />
+            Tablero Kanban (Postulaciones)
           </button>
         </div>
       </div>

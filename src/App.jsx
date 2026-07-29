@@ -40,6 +40,7 @@ import CatalogosPublicos from './pages/CatalogosPublicos';
 import CatalogosAdmin from './pages/admin/CatalogosAdmin';
 
 import GestionEncargados from './components/jcf/GestionEncargados';
+import KanbanJCF from './components/jcf/KanbanJCF';
 
 function App() {
   return (
@@ -96,6 +97,7 @@ function App() {
         <Route path="/mis-campanas"    element={<ProtectedRoute><MisCampanas /></ProtectedRoute>} />
         <Route path="/mis-inversiones" element={<ProtectedRoute><MisInversiones /></ProtectedRoute>} />
         <Route path="/jcf/encargados" element={<ProtectedRoute allowedRoles={['admin', 'lider_jcf']}><GestionEncargados /></ProtectedRoute>} />
+        <Route path="/jcf/kanban" element={<ProtectedRoute allowedRoles={['admin', 'lider_jcf', 'encargado_jcf']}><KanbanJCF /></ProtectedRoute>} />
 
         <Route path="/"  element={<Navigate to="/login" replace />} />
         <Route path="*"  element={<Navigate to="/login" replace />} />
