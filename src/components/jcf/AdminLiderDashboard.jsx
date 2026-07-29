@@ -3,8 +3,10 @@ import Layout from '../common/Layout';
 import { Users, Plus, ArrowLeft, Mail, Shield, X, Save } from 'lucide-react';
 import { jcfService } from '../../services/jcfService';
 import axios from '../../services/axios';
+import { useNavigate } from 'react-router-dom';
 
 const AdminLiderDashboard = () => {
+  const navigate = useNavigate();
   const [vistaActual, setVistaActual] = useState('menu');
   const [usuariosLideres, setUsuariosLideres] = useState([]);
   const [hoveredRow, setHoveredRow] = useState(null);
@@ -280,7 +282,7 @@ const AdminLiderDashboard = () => {
           </p>
         </div>
         
-        <div style={{ width: '100%', maxWidth: '320px', marginTop: '10px' }}>
+        <div style={{ width: '100%', maxWidth: '320px', marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <button
             onClick={() => setVistaActual('crud')}
             style={{ width: '100%', padding: '16px', background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', color: '#fff', border: 'none', borderRadius: 'var(--radius-lg)', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '16px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(31,78,158,0.25)', transition: 'all 200ms ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
@@ -289,6 +291,16 @@ const AdminLiderDashboard = () => {
           >
             <Users style={{ width: '20px', height: '20px' }} />
             Gestionar Líderes
+          </button>
+
+          <button
+            onClick={() => navigate('/jcf/encargados')}
+            style={{ width: '100%', padding: '16px', background: 'linear-gradient(135deg, #10B981, #059669)', color: '#fff', border: 'none', borderRadius: 'var(--radius-lg)', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '16px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)', transition: 'all 200ms ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            <Users style={{ width: '20px', height: '20px' }} />
+            Gestionar Encargados
           </button>
         </div>
       </div>
