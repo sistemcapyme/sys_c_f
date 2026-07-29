@@ -13,5 +13,8 @@ export const jcfService = {
   actualizarEstado: async (id, estadoKanban) => (await api.patch(`/jcf/aprendices/${id}/estado`, { estadoKanban })).data,
   asignarEncargado: async (id, encargadoId) => (await api.patch(`/jcf/aprendices/${id}/encargado`, { encargadoId })).data,
   obtenerLideres: async () => (await api.get('/jcf/lideres')).data,
-  crearNegocio: async (data) => (await api.post('/jcf/negocios', data)).data
+  crearNegocio: async (data) => (await api.post('/jcf/negocios', data)).data,
+  crearAprendiz: async (data) => (await api.post('/api/jcf/aprendices', data)).data,
+  actualizarAprendiz: async (id, data) => (await api.put(`/api/jcf/aprendices/${id}`, data)).data, 
+  obtenerEncargados: async () => (await api.get('/api/encargados')).data
 };

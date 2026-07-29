@@ -1,108 +1,123 @@
 import React, { useState, useEffect } from 'react';
 import { jcfService } from '../../services/jcfService';
-import ModalAprendiz from './ModalAprendiz';
+import { Plus, GripVertical } from 'lucide-react';
+import ModalAprendizKanban from './ModalAprendizKanban';
 
-const COLUMNAS = [
-  { id: 'PENDIENTE', titulo: 'Pendiente' },
-  { id: 'APROBADO', titulo: 'Aprobado' },
-  { id: 'RECHAZADO', titulo: 'Rechazado' }
-];
-
-export default function KanbanJCF() {
+const KanbanJCF = () => {
   const [aprendices, setAprendices] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [aprendizSeleccionado, setAprendizSeleccionado] = useState(null);
+  const [encargados, setEncargados] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedAprendiz, setSelectedAprendiz] = useState(null);
+
+  const columnas = [
+    { id: 'PENDIENTE', titulo: 'Pendientes', color: 'border-l-yellow-500' },
+    { id: 'EN_PROCESO', titulo: 'En Proceso', color: 'border-l-blue-500' },
+    { id: 'POSTULADO', titulo: 'Postulados', color: 'border-l-green-500' }
+  ];
 
   useEffect(() => {
-    cargarAprendices();
+    cargarDatos();
   }, []);
 
-  const cargarAprendices = async () => {
+  const cargarDatos = async () => {
     try {
-      setLoading(true);
-      const data = await jcfService.obtenerAprendices();
-      setAprendices(data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+      const resAprendices = await jcfService.obtenerAprendices();
+      if (resAprendices.success) setAprendices(resAprendices.data);
+      
+      const resEncargados = await jcfService.obtenerEncargados();
+      setEncargados(resEncargados);
+    } catch (error) {
+      console.error('Error al cargar datos Kanban:', error);
     }
   };
 
-  const handleCambiarEstado = async (id, nuevoEstado) => {
+  const handleDragStart = (e, id) => {
+    e.dataTransfer.setData('aprendizId', id);
+  };
+
+  const handleDrop = async (e, nuevoEstado) => {
+    e.preventDefault();
+    const aprendizId = e.dataTransfer.getData('aprendizId');
+    
+    setAprendices(prev => prev.map(a => 
+      a.id === Number(aprendizId) ? { ...a, estadoKanban: nuevoEstado } : a
+    ));
+
     try {
-      await jcfService.actualizarEstado(id, nuevoEstado);
-      setAprendices(prev =>
-        prev.map(a => (a.id === id ? { ...a, estado_kanban: nuevoEstado } : a))
-      );
-    } catch (err) {
-      console.error(err);
+      await jcfService.actualizarEstado(aprendizId, nuevoEstado);
+    } catch (error) {
+      console.error('Error actualizando estado:', error);
+      cargarDatos();
     }
   };
 
-  const handleAsignarEncargado = async (id, encargadoId) => {
-    try {
-      await jcfService.asignarEncargado(id, encargadoId);
-      cargarAprendices();
-    } catch (err) {
-      console.error(err);
-    }
+  const handleDragOver = (e) => {
+    e.preventDefault();
   };
 
-  if (loading) return <div className="p-6 text-center">Cargando tablero...</div>;
+  const openModal = (aprendiz = null) => {
+    setSelectedAprendiz(aprendiz);
+    setModalOpen(true);
+  };
 
   return (
-    <div className="p-4">
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Kanban de Postulaciones</h1>
+          <p className="text-sm text-gray-500">Arrastra las tarjetas para cambiar su estado</p>
+        </div>
+        <button 
+          onClick={() => openModal()}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+        >
+          <Plus size={20} />
+          Nuevo Registro
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {COLUMNAS.map(col => (
-          <div key={col.id} className="bg-gray-100 rounded-lg p-4 min-h-[500px]">
-            <h3 className="font-bold text-gray-700 mb-4 text-center border-b border-gray-300 pb-2">
-              {col.titulo} ({aprendices.filter(a => a.estado_kanban === col.id).length})
+        {columnas.map(col => (
+          <div 
+            key={col.id}
+            onDrop={(e) => handleDrop(e, col.id)}
+            onDragOver={handleDragOver}
+            className="bg-gray-50 rounded-xl p-4 min-h-[500px]"
+          >
+            <h3 className="font-bold text-gray-700 mb-4 pb-2 border-b-2 border-gray-200">
+              {col.titulo}
             </h3>
-            
-            <div className="space-y-4">
-              {aprendices
-                .filter(a => a.estado_kanban === col.id)
-                .map(item => (
-                  <div
-                    key={item.id}
-                    className="bg-white p-4 rounded shadow hover:shadow-md transition cursor-pointer border-l-4 border-blue-600"
-                  >
-                    <div onClick={() => setAprendizSeleccionado(item)}>
-                      <p className="font-semibold text-gray-800">{item.nombre} {item.apellido}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        📍 Negocio: {item.negocio?.nombre_negocio || 'Sin asignar'}
-                      </p>
-                      <p className="text-xs text-blue-600 mt-1">
-                        👤 Encargado ID: {item.encargado_id || 'Pendiente'}
-                      </p>
-                    </div>
-                    <div className="mt-3 flex justify-between gap-2 border-t pt-2">
-                      {COLUMNAS.filter(c => c.id !== col.id).map(btnCol => (
-                        <button
-                          key={btnCol.id}
-                          onClick={(e) => { e.stopPropagation(); handleCambiarEstado(item.id, btnCol.id); }}
-                          className="text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded text-gray-700 w-full"
-                        >
-                          Mover a {btnCol.titulo}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+            <div className="flex flex-col gap-3">
+              {aprendices.filter(a => a.estadoKanban === col.id).map(aprendiz => (
+                <div
+                  key={aprendiz.id}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, aprendiz.id)}
+                  onClick={() => openModal(aprendiz)}
+                  className={`bg-white p-4 rounded-lg shadow-sm border-l-4 ${col.color} cursor-pointer hover:shadow-md transition-shadow relative group`}
+                >
+                  <GripVertical size={16} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-300 opacity-0 group-hover:opacity-100" />
+                  <h4 className="font-bold text-gray-800 text-sm mb-1">{aprendiz.nombre} {aprendiz.apellido}</h4>
+                  <p className="text-xs text-gray-500">
+                    Encargado: {aprendiz.encargado ? `${aprendiz.encargado.nombre} ${aprendiz.encargado.apellido}` : 'Sin asignar'}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         ))}
       </div>
 
-      {aprendizSeleccionado && (
-        <ModalAprendiz
-          aprendiz={aprendizSeleccionado}
-          onClose={() => setAprendizSeleccionado(null)}
-          onActualizarEstado={handleCambiarEstado}
-          onAsignarEncargado={handleAsignarEncargado}
+      {modalOpen && (
+        <ModalAprendizKanban 
+          aprendiz={selectedAprendiz} 
+          encargados={encargados}
+          onClose={() => setModalOpen(false)} 
+          onRefresh={cargarDatos}
         />
       )}
     </div>
   );
-}
+};
+
+export default KanbanJCF;
