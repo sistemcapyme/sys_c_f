@@ -39,7 +39,7 @@ import PagoFallidoCatalogo from './pages/PagoFallidoCatalogo';
 import CatalogosPublicos from './pages/CatalogosPublicos';
 import CatalogosAdmin from './pages/admin/CatalogosAdmin';
 
-import GestionEncargados from './pages/GestionEncargados';
+import GestionEncargados from './pages/jcf/GestionEncargados';
 
 function App() {
   return (
