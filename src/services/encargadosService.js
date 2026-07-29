@@ -1,6 +1,6 @@
 import api from './axios';
 
-const ENCARGADOS_URL = '/api/encargados';
+const ENCARGADOS_URL = '/encargados';
 
 export const getEncargados = async () => {
   const response = await api.get(ENCARGADOS_URL);
