@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Layout from '../common/Layout'; // <-- Ruta corregida
+import Layout from '../common/Layout';
 import axios from '../../services/axios';
 import { Users, Plus, ArrowLeft, User, Briefcase, FileText } from 'lucide-react';
 
