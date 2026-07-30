@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Layout from '../common/Layout';
 import { getEncargados, createEncargado, updateEncargado, deleteEncargado } from '../../services/encargadosService';
-import { Users, Plus, Edit2, Trash2, X, Save, Mail, ArrowLeft } from 'lucide-react';
+import { Users, Plus, Edit2, Trash2, X, Save, Mail, ArrowLeft, UserCheck, LayoutDashboard, UsersRound } from 'lucide-react';
 
 const GestionEncargados = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const path = location.pathname;
+  
   const [encargados, setEncargados] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hoveredRow, setHoveredRow] = useState(null);
@@ -13,12 +16,7 @@ const GestionEncargados = () => {
   const [editId, setEditId] = useState(null);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
-    nombre: '',
-    apellido: '',
-    email: '',
-    password: '',
-    telefono: '',
-    activo: true
+    nombre: '', apellido: '', email: '', password: '', telefono: '', activo: true
   });
 
   useEffect(() => {
@@ -29,10 +27,11 @@ const GestionEncargados = () => {
     try {
       setLoading(true);
       const data = await getEncargados();
-      setEncargados(data);
+      setEncargados(Array.isArray(data) ? data : (data?.data && Array.isArray(data.data) ? data.data : []));
     } catch (err) {
       console.error(err);
       setError('Error al cargar los encargados');
+      setEncargados([]);
     } finally {
       setLoading(false);
     }
@@ -51,23 +50,13 @@ const GestionEncargados = () => {
     if (encargado) {
       setEditId(encargado.id);
       setFormData({
-        nombre: encargado.nombre || '',
-        apellido: encargado.apellido || '',
-        email: encargado.email || '',
-        password: '',
-        telefono: encargado.telefono || '',
+        nombre: encargado.nombre || '', apellido: encargado.apellido || '',
+        email: encargado.email || '', password: '', telefono: encargado.telefono || '',
         activo: encargado.activo
       });
     } else {
       setEditId(null);
-      setFormData({
-        nombre: '',
-        apellido: '',
-        email: '',
-        password: '',
-        telefono: '',
-        activo: true
-      });
+      setFormData({ nombre: '', apellido: '', email: '', password: '', telefono: '', activo: true });
     }
     setModalOpen(true);
   };
@@ -106,6 +95,17 @@ const GestionEncargados = () => {
     }
   };
 
+  const safeEncargados = Array.isArray(encargados) ? encargados : [];
+
+  const navBtnStyle = (isActive) => ({
+    display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px',
+    background: isActive ? 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))' : '#fff',
+    color: isActive ? '#fff' : 'var(--gray-600)', border: isActive ? 'none' : '1px solid var(--border)',
+    borderRadius: 'var(--radius-md)', fontFamily: "'Plus Jakarta Sans', sans-serif",
+    fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+    boxShadow: isActive ? '0 2px 8px rgba(31,78,158,0.28)' : 'none', transition: 'all 200ms ease'
+  });
+
   const btnStyle = {
     display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', 
     background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', 
@@ -123,9 +123,7 @@ const GestionEncargados = () => {
   if (loading) {
     return (
       <Layout>
-        <div style={{ padding: '24px', textAlign: 'center', fontFamily: "'DM Sans', sans-serif" }}>
-          Cargando encargados...
-        </div>
+        <div style={{ padding: '24px', textAlign: 'center', fontFamily: "'DM Sans', sans-serif" }}>Cargando encargados...</div>
       </Layout>
     );
   }
@@ -134,10 +132,25 @@ const GestionEncargados = () => {
     <Layout>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
         
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <button onClick={() => navigate('/jcf/lideres')} style={navBtnStyle(false)}>
+            <UsersRound style={{width: 16, height: 16}}/> Gestionar Líderes
+          </button>
+          <button onClick={() => navigate('/jcf/encargados')} style={navBtnStyle(true)}>
+            <UserCheck style={{width: 16, height: 16}}/> Gestionar Encargados
+          </button>
+          <button onClick={() => navigate('/jcf/jovenes')} style={navBtnStyle(false)}>
+            <Users style={{width: 16, height: 16}}/> Distribución de Jóvenes
+          </button>
+          <button onClick={() => navigate('/jcf/kanban')} style={navBtnStyle(false)}>
+            <LayoutDashboard style={{width: 16, height: 16}}/> Tablero Kanban
+          </button>
+        </div>
+
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
           <div>
-            <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '26px', fontWeight: 800, color: 'var(--gray-900)', letterSpacing: '-0.02em', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Users style={{ width: '28px', height: '28px', color: 'var(--capyme-blue-mid)' }} />
+            <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '26px', fontWeight: 800, color: 'var(--gray-900)', letterSpacing: '-0.02em', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <UserCheck style={{ width: '28px', height: '28px', color: 'var(--capyme-blue-mid)' }} />
               Gestión de Encargados JCF
             </h1>
             <p style={{ fontSize: '14px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>
@@ -151,7 +164,7 @@ const GestionEncargados = () => {
               onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-50)'}
               onMouseLeave={e => e.currentTarget.style.background = '#fff'}
             >
-              <ArrowLeft style={{ width: '16px', height: '16px' }} /> Volver
+              <ArrowLeft style={{ width: '16px', height: '16px' }} /> Volver al Menú
             </button>
             <button 
               onClick={() => openModal()}
@@ -170,21 +183,21 @@ const GestionEncargados = () => {
               <thead>
                 <tr style={{ background: 'var(--gray-50)' }}>
                   {['Nombre Completo', 'Correo', 'Teléfono', 'Estado', 'Acciones'].map((h, i) => (
-                    <th key={h} style={{ padding: '14px 24px', textAlign: i === 4 ? 'center' : 'left', fontSize: '11px', fontWeight: 700, color: 'var(--gray-500)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'Plus Jakarta Sans', sans-serif", borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>
+                    <th key={h} style={{ padding: '14px 24px', textAlign: i === 4 ? 'center' : 'left', fontSize: '11px', fontWeight: 700, color: 'var(--gray-500)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'Plus Jakarta Sans', sans-serif", borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap', margin: 0 }}>
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {encargados.length === 0 ? (
+                {safeEncargados.length === 0 ? (
                   <tr>
-                    <td colSpan="5" style={{ padding: '24px', textAlign: 'center', color: 'var(--gray-500)', fontSize: '14px', fontFamily: "'DM Sans', sans-serif" }}>
+                    <td colSpan="5" style={{ padding: '24px', textAlign: 'center', color: 'var(--gray-500)', fontSize: '14px', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>
                       No hay encargados registrados.
                     </td>
                   </tr>
                 ) : (
-                  encargados.map((encargado) => (
+                  safeEncargados.map((encargado) => (
                     <tr 
                       key={encargado.id}
                       onMouseEnter={() => setHoveredRow(encargado.id)}
@@ -207,7 +220,7 @@ const GestionEncargados = () => {
                           {encargado.email}
                         </p>
                       </td>
-                      <td style={{ padding: '14px 24px', fontSize: '13px', color: 'var(--gray-700)', fontFamily: "'DM Sans', sans-serif" }}>
+                      <td style={{ padding: '14px 24px', fontSize: '13px', color: 'var(--gray-700)', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>
                         {encargado.telefono || 'N/A'}
                       </td>
                       <td style={{ padding: '14px 24px' }}>
@@ -258,43 +271,43 @@ const GestionEncargados = () => {
               
               <form onSubmit={handleSubmit} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {error && (
-                  <div style={{ padding: '12px', background: '#FEF2F2', color: '#991B1B', borderRadius: 'var(--radius-md)', fontSize: '13px', fontFamily: "'DM Sans', sans-serif" }}>
+                  <div style={{ padding: '12px', background: '#FEF2F2', color: '#991B1B', borderRadius: 'var(--radius-md)', fontSize: '13px', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>
                     {error}
                   </div>
                 )}
                 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif" }}>Nombre</label>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>Nombre</label>
                     <input type="text" name="nombre" value={formData.nombre} onChange={handleInputChange} required style={inputStyle} />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif" }}>Apellido</label>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>Apellido</label>
                     <input type="text" name="apellido" value={formData.apellido} onChange={handleInputChange} required style={inputStyle} />
                   </div>
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif" }}>Correo Electrónico</label>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>Correo Electrónico</label>
                   <input type="email" name="email" value={formData.email} onChange={handleInputChange} required style={inputStyle} />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif" }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>
                     Contraseña {editId && <span style={{ color: 'var(--gray-400)', fontWeight: 400 }}>(Dejar en blanco para mantener actual)</span>}
                   </label>
                   <input type="password" name="password" value={formData.password} onChange={handleInputChange} required={!editId} style={inputStyle} />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif" }}>Teléfono</label>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>Teléfono</label>
                   <input type="tel" name="telefono" value={formData.telefono} onChange={handleInputChange} style={inputStyle} />
                 </div>
 
                 {editId && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
                     <input type="checkbox" id="activo" name="activo" checked={formData.activo} onChange={handleInputChange} style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
-                    <label htmlFor="activo" style={{ fontSize: '14px', color: 'var(--gray-700)', fontFamily: "'DM Sans', sans-serif", cursor: 'pointer' }}>
+                    <label htmlFor="activo" style={{ fontSize: '14px', color: 'var(--gray-700)', fontFamily: "'DM Sans', sans-serif", cursor: 'pointer', margin: 0 }}>
                       Usuario Activo
                     </label>
                   </div>
