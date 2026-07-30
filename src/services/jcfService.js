@@ -16,5 +16,9 @@ export const jcfService = {
   crearNegocio: async (data) => (await api.post('/jcf/negocios', data)).data,
   crearAprendiz: async (data) => (await api.post('/api/jcf/aprendices', data)).data,
   actualizarAprendiz: async (id, data) => (await api.put(`/api/jcf/aprendices/${id}`, data)).data, 
-  obtenerEncargados: async () => (await api.get('/api/encargados')).data
+  obtenerEncargados: async () => (await api.get('/api/encargados')).data,
+  obtenerJovenes: async () => (await api.get('/api/jcf/jovenes')).data,
+  crearJoven: async (data) => (await api.post('/api/jcf/jovenes', data)).data,
+  actualizarJoven: async (id, data) => (await api.put(`/api/jcf/jovenes/${id}`, data)).data,
+  eliminarJoven: async (id) => (await api.delete(`/api/jcf/jovenes/${id}`)).data
 };
