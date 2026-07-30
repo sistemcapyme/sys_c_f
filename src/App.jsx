@@ -41,6 +41,7 @@ import CatalogosAdmin from './pages/admin/CatalogosAdmin';
 
 import GestionEncargados from './components/jcf/GestionEncargados';
 import KanbanJCF from './components/jcf/KanbanJCF';
+import JovenesJCF from './components/jcf/JovenesJCF'; // <-- NUEVO IMPORT AGREGADO
 
 function App() {
   return (
@@ -77,10 +78,16 @@ function App() {
         <Route path="/avisos/:id"     element={<ProtectedRoute allowedRoles={['admin','colaborador']}><AvisoDetalle /></ProtectedRoute>} />
         <Route path="/enlaces"        element={<ProtectedRoute allowedRoles={['admin','colaborador']}><Enlaces /></ProtectedRoute>} />
         <Route path="/contacto"       element={<ProtectedRoute allowedRoles={['admin','colaborador']}><Contacto /></ProtectedRoute>} />
-        <Route path="/jcf"            element={<ProtectedRoute allowedRoles={['admin','colaborador']}><JovenesConstruyendoFuturo /></ProtectedRoute>} />
+        
+        {/* === RUTAS DEL MÓDULO JCF ACTUALIZADAS === */}
+        <Route path="/jcf"            element={<ProtectedRoute allowedRoles={['admin','colaborador','lider_jcf','encargado_jcf']}><JovenesConstruyendoFuturo /></ProtectedRoute>} />
+        <Route path="/jcf/lideres"    element={<ProtectedRoute allowedRoles={['admin', 'lider_jcf']}><JovenesConstruyendoFuturo /></ProtectedRoute>} />
+        <Route path="/jcf/jovenes"    element={<ProtectedRoute allowedRoles={['admin', 'lider_jcf']}><JovenesJCF /></ProtectedRoute>} />
+        <Route path="/jcf/encargados" element={<ProtectedRoute allowedRoles={['admin', 'lider_jcf']}><GestionEncargados /></ProtectedRoute>} />
+        <Route path="/jcf/kanban"     element={<ProtectedRoute allowedRoles={['admin', 'lider_jcf', 'encargado_jcf']}><KanbanJCF /></ProtectedRoute>} />
         
         <Route path="/campanas"       element={<ProtectedRoute allowedRoles={['admin']}><CampanasAdmin /></ProtectedRoute>} />
-        <Route path="/admin/catalogos"       element={<ProtectedRoute allowedRoles={['admin']}><CatalogosAdmin /></ProtectedRoute>} />
+        <Route path="/admin/catalogos" element={<ProtectedRoute allowedRoles={['admin']}><CatalogosAdmin /></ProtectedRoute>} />
 
         <Route path="/cliente/dashboard"      element={<ProtectedRoute allowedRoles={['cliente']}><ClienteDashboard /></ProtectedRoute>} />
         <Route path="/cliente/mis-negocios"   element={<ProtectedRoute allowedRoles={['cliente']}><MisNegocios /></ProtectedRoute>} />
@@ -96,8 +103,6 @@ function App() {
         <Route path="/inversiones"     element={<ProtectedRoute><Inversiones /></ProtectedRoute>} />
         <Route path="/mis-campanas"    element={<ProtectedRoute><MisCampanas /></ProtectedRoute>} />
         <Route path="/mis-inversiones" element={<ProtectedRoute><MisInversiones /></ProtectedRoute>} />
-        <Route path="/jcf/encargados" element={<ProtectedRoute allowedRoles={['admin', 'lider_jcf']}><GestionEncargados /></ProtectedRoute>} />
-        <Route path="/jcf/kanban" element={<ProtectedRoute allowedRoles={['admin', 'lider_jcf', 'encargado_jcf']}><KanbanJCF /></ProtectedRoute>} />
 
         <Route path="/"  element={<Navigate to="/login" replace />} />
         <Route path="*"  element={<Navigate to="/login" replace />} />
@@ -105,6 +110,5 @@ function App() {
     </BrowserRouter>
   );
 }
-
 
 export default App;
