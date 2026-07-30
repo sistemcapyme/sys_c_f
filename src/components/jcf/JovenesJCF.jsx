@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ModalJovenJCF from './ModalJovenJCF';
-import jcfService from '../../services/jcfService';
+import { jcfService } from '../../services/jcfService';
 
 const JovenesJCF = () => {
   const [jovenes, setJovenes] = useState([]);
