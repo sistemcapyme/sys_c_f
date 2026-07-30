@@ -27,7 +27,6 @@ const GestionEncargados = () => {
     try {
       setLoading(true);
       const data = await getEncargados();
-      // SEGURO AL ERROR `.map is not a function`:
       setEncargados(Array.isArray(data) ? data : (data?.data && Array.isArray(data.data) ? data.data : []));
     } catch (err) {
       console.error(err);
@@ -134,23 +133,23 @@ const GestionEncargados = () => {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
         
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          <button onClick={() => navigate('/jcf')} style={navBtnStyle(path === '/jcf' || path.includes('lideres'))}>
+          <button onClick={() => navigate('/jcf/lideres')} style={navBtnStyle(false)}>
             <UsersRound style={{width: 16, height: 16}}/> Gestionar Líderes
           </button>
-          <button onClick={() => navigate('/jcf/encargados')} style={navBtnStyle(path.includes('encargados'))}>
+          <button onClick={() => navigate('/jcf/encargados')} style={navBtnStyle(true)}>
             <UserCheck style={{width: 16, height: 16}}/> Gestionar Encargados
           </button>
-          <button onClick={() => navigate('/jcf/jovenes')} style={navBtnStyle(path.includes('jovenes') || path.includes('distribucion'))}>
+          <button onClick={() => navigate('/jcf/jovenes')} style={navBtnStyle(false)}>
             <Users style={{width: 16, height: 16}}/> Distribución de Jóvenes
           </button>
-          <button onClick={() => navigate('/jcf/kanban')} style={navBtnStyle(path.includes('kanban'))}>
+          <button onClick={() => navigate('/jcf/kanban')} style={navBtnStyle(false)}>
             <LayoutDashboard style={{width: 16, height: 16}}/> Tablero Kanban
           </button>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
           <div>
-            <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '26px', fontWeight: 800, color: 'var(--gray-900)', letterSpacing: '-0.02em', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '26px', fontWeight: 800, color: 'var(--gray-900)', letterSpacing: '-0.02em', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
               <UserCheck style={{ width: '28px', height: '28px', color: 'var(--capyme-blue-mid)' }} />
               Gestión de Encargados JCF
             </h1>
@@ -159,6 +158,14 @@ const GestionEncargados = () => {
             </p>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
+            <button 
+              onClick={() => navigate('/jcf')}
+              style={{ ...btnStyle, background: '#fff', color: 'var(--gray-700)', border: '1px solid var(--border)', boxShadow: 'none' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-50)'}
+              onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+            >
+              <ArrowLeft style={{ width: '16px', height: '16px' }} /> Volver al Menú
+            </button>
             <button 
               onClick={() => openModal()}
               style={btnStyle}
@@ -176,7 +183,7 @@ const GestionEncargados = () => {
               <thead>
                 <tr style={{ background: 'var(--gray-50)' }}>
                   {['Nombre Completo', 'Correo', 'Teléfono', 'Estado', 'Acciones'].map((h, i) => (
-                    <th key={h} style={{ padding: '14px 24px', textAlign: i === 4 ? 'center' : 'left', fontSize: '11px', fontWeight: 700, color: 'var(--gray-500)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'Plus Jakarta Sans', sans-serif", borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>
+                    <th key={h} style={{ padding: '14px 24px', textAlign: i === 4 ? 'center' : 'left', fontSize: '11px', fontWeight: 700, color: 'var(--gray-500)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'Plus Jakarta Sans', sans-serif", borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap', margin: 0 }}>
                       {h}
                     </th>
                   ))}
@@ -185,7 +192,7 @@ const GestionEncargados = () => {
               <tbody>
                 {safeEncargados.length === 0 ? (
                   <tr>
-                    <td colSpan="5" style={{ padding: '24px', textAlign: 'center', color: 'var(--gray-500)', fontSize: '14px', fontFamily: "'DM Sans', sans-serif" }}>
+                    <td colSpan="5" style={{ padding: '24px', textAlign: 'center', color: 'var(--gray-500)', fontSize: '14px', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>
                       No hay encargados registrados.
                     </td>
                   </tr>
@@ -213,7 +220,7 @@ const GestionEncargados = () => {
                           {encargado.email}
                         </p>
                       </td>
-                      <td style={{ padding: '14px 24px', fontSize: '13px', color: 'var(--gray-700)', fontFamily: "'DM Sans', sans-serif" }}>
+                      <td style={{ padding: '14px 24px', fontSize: '13px', color: 'var(--gray-700)', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>
                         {encargado.telefono || 'N/A'}
                       </td>
                       <td style={{ padding: '14px 24px' }}>
@@ -227,12 +234,16 @@ const GestionEncargados = () => {
                           <button 
                             onClick={() => openModal(encargado)}
                             style={{ padding: '6px', background: '#EEF4FF', border: '1px solid #D1E0FF', borderRadius: 'var(--radius-sm)', color: 'var(--capyme-blue-mid)', cursor: 'pointer', transition: 'all 150ms ease' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--capyme-blue-mid)'; e.currentTarget.style.color = '#fff'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = '#EEF4FF'; e.currentTarget.style.color = 'var(--capyme-blue-mid)'; }}
                           >
                             <Edit2 style={{ width: '16px', height: '16px' }} />
                           </button>
                           <button 
                             onClick={() => handleDelete(encargado.id)}
                             style={{ padding: '6px', background: '#FEF2F2', border: '1px solid #FEE2E2', borderRadius: 'var(--radius-sm)', color: '#EF4444', cursor: 'pointer', transition: 'all 150ms ease' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = '#EF4444'; e.currentTarget.style.color = '#fff'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = '#FEF2F2'; e.currentTarget.style.color = '#EF4444'; }}
                           >
                             <Trash2 style={{ width: '16px', height: '16px' }} />
                           </button>
@@ -260,43 +271,43 @@ const GestionEncargados = () => {
               
               <form onSubmit={handleSubmit} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {error && (
-                  <div style={{ padding: '12px', background: '#FEF2F2', color: '#991B1B', borderRadius: 'var(--radius-md)', fontSize: '13px', fontFamily: "'DM Sans', sans-serif" }}>
+                  <div style={{ padding: '12px', background: '#FEF2F2', color: '#991B1B', borderRadius: 'var(--radius-md)', fontSize: '13px', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>
                     {error}
                   </div>
                 )}
                 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif" }}>Nombre</label>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>Nombre</label>
                     <input type="text" name="nombre" value={formData.nombre} onChange={handleInputChange} required style={inputStyle} />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif" }}>Apellido</label>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>Apellido</label>
                     <input type="text" name="apellido" value={formData.apellido} onChange={handleInputChange} required style={inputStyle} />
                   </div>
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif" }}>Correo Electrónico</label>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>Correo Electrónico</label>
                   <input type="email" name="email" value={formData.email} onChange={handleInputChange} required style={inputStyle} />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif" }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>
                     Contraseña {editId && <span style={{ color: 'var(--gray-400)', fontWeight: 400 }}>(Dejar en blanco para mantener actual)</span>}
                   </label>
                   <input type="password" name="password" value={formData.password} onChange={handleInputChange} required={!editId} style={inputStyle} />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif" }}>Teléfono</label>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>Teléfono</label>
                   <input type="tel" name="telefono" value={formData.telefono} onChange={handleInputChange} style={inputStyle} />
                 </div>
 
                 {editId && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
                     <input type="checkbox" id="activo" name="activo" checked={formData.activo} onChange={handleInputChange} style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
-                    <label htmlFor="activo" style={{ fontSize: '14px', color: 'var(--gray-700)', fontFamily: "'DM Sans', sans-serif", cursor: 'pointer' }}>
+                    <label htmlFor="activo" style={{ fontSize: '14px', color: 'var(--gray-700)', fontFamily: "'DM Sans', sans-serif", cursor: 'pointer', margin: 0 }}>
                       Usuario Activo
                     </label>
                   </div>

@@ -41,7 +41,7 @@ import CatalogosAdmin from './pages/admin/CatalogosAdmin';
 
 import GestionEncargados from './components/jcf/GestionEncargados';
 import KanbanJCF from './components/jcf/KanbanJCF';
-import JovenesJCF from './components/jcf/JovenesJCF'; // <-- NUEVO IMPORT AGREGADO
+import JovenesJCF from './components/jcf/JovenesJCF'; 
 
 function App() {
   return (
@@ -79,7 +79,6 @@ function App() {
         <Route path="/enlaces"        element={<ProtectedRoute allowedRoles={['admin','colaborador']}><Enlaces /></ProtectedRoute>} />
         <Route path="/contacto"       element={<ProtectedRoute allowedRoles={['admin','colaborador']}><Contacto /></ProtectedRoute>} />
         
-        {/* === RUTAS DEL MÓDULO JCF ACTUALIZADAS === */}
         <Route path="/jcf"            element={<ProtectedRoute allowedRoles={['admin','colaborador','lider_jcf','encargado_jcf']}><JovenesConstruyendoFuturo /></ProtectedRoute>} />
         <Route path="/jcf/lideres"    element={<ProtectedRoute allowedRoles={['admin', 'lider_jcf']}><JovenesConstruyendoFuturo /></ProtectedRoute>} />
         <Route path="/jcf/jovenes"    element={<ProtectedRoute allowedRoles={['admin', 'lider_jcf']}><JovenesJCF /></ProtectedRoute>} />

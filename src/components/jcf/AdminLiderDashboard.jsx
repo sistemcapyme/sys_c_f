@@ -19,7 +19,6 @@ const AdminLiderDashboard = () => {
     nombre: '', apellido: '', email: '', password: '', activo: true
   });
 
-  // Detectar la ruta en la que estamos para abrir el CRUD automáticamente
   useEffect(() => {
     if (path.includes('lideres')) {
       setVistaActual('crud');
@@ -101,7 +100,6 @@ const AdminLiderDashboard = () => {
       <Layout>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
           
-          {/* BOTONES SUPERIORES DE NAVEGACIÓN */}
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             <button onClick={() => navigate('/jcf/lideres')} style={navBtnStyle(true)}>
               <UsersRound style={{width: 16, height: 16}}/> Gestionar Líderes
@@ -123,7 +121,7 @@ const AdminLiderDashboard = () => {
                 <UsersRound style={{ width: '28px', height: '28px', color: 'var(--capyme-blue-mid)' }} />
                 Usuarios Líderes
               </h1>
-              <p style={{ fontSize: '14px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif" }}>
+              <p style={{ fontSize: '14px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>
                 Gestión de líderes registrados en el sistema
               </p>
             </div>
@@ -165,7 +163,7 @@ const AdminLiderDashboard = () => {
                       onMouseLeave={() => setHoveredRow(null)}
                       style={{ borderBottom: '1px solid var(--border)', transition: 'background 150ms ease', background: hoveredRow === usuario.id ? 'var(--gray-50)' : 'transparent' }}
                     >
-                      <td style={{ padding: '14px 24px', fontSize: '13px', fontWeight: 600, color: 'var(--gray-900)', fontFamily: "'DM Sans', sans-serif" }}>
+                      <td style={{ padding: '14px 24px', fontSize: '13px', fontWeight: 600, color: 'var(--gray-900)', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>
                         {usuario.id}
                       </td>
                       <td style={{ padding: '14px 24px' }}>
@@ -251,7 +249,7 @@ const AdminLiderDashboard = () => {
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
                   <input type="checkbox" name="activo" checked={formData.activo} onChange={handleChange} id="activoCheck" style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
-                  <label htmlFor="activoCheck" style={{ fontSize: '14px', color: 'var(--gray-700)', fontFamily: "'DM Sans', sans-serif", cursor: 'pointer' }}>Usuario Activo</label>
+                  <label htmlFor="activoCheck" style={{ fontSize: '14px', color: 'var(--gray-700)', fontFamily: "'DM Sans', sans-serif", cursor: 'pointer', margin: 0 }}>Usuario Activo</label>
                 </div>
 
                 <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
@@ -271,7 +269,6 @@ const AdminLiderDashboard = () => {
     );
   }
 
-  // VISTA DEL MENÚ PRINCIPAL
   return (
     <Layout>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '70vh', gap: '24px' }}>
@@ -287,7 +284,6 @@ const AdminLiderDashboard = () => {
           </p>
         </div>
         
-        {/* BOTONES MENÚ PRINCIPAL (REDIRECCIÓN POR RUTAS) */}
         <div style={{ width: '100%', maxWidth: '340px', marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <button
             onClick={() => navigate('/jcf/lideres')}

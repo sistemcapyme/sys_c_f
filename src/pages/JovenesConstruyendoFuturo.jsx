@@ -7,12 +7,10 @@ const JovenesConstruyendoFuturo = () => {
   const currentUser = authStorage?.state?.user || {};
   const rolUsuario = currentUser?.rol?.toLowerCase();
 
-  // Si el usuario es un encargado, redirigir inmediatamente al Kanban
   if (rolUsuario === 'encargado' || rolUsuario === 'encargado_jcf') {
     return <Navigate to="/jcf/kanban" replace />;
   }
 
-  // Si es Admin o Líder, mostrar el Dashboard (que incluye menú y gestión)
   return <AdminLiderDashboard />;
 };
 
