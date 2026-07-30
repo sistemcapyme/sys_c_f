@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ModalAprendiz from './ModalAprendiz';
-import jcfService from '../../services/jcfService';
+import { jcfService } from '../../services/jcfService';
 
 const KanbanJCF = () => {
   const [tareas, setTareas] = useState([]);
@@ -13,7 +13,7 @@ const KanbanJCF = () => {
 
   const cargarTareas = async () => {
     try {
-      const data = await jcfService.obtenerTareas();
+      const data = await jcfService.obtenerAprendices();
       setTareas(data);
     } catch (error) {
       console.error(error);
@@ -33,9 +33,9 @@ const KanbanJCF = () => {
   const guardarTarea = async (datos) => {
     try {
       if (tareaSeleccionada) {
-        await jcfService.actualizarTarea(tareaSeleccionada.id, datos);
+        await jcfService.actualizarAprendiz(tareaSeleccionada.id, datos);
       } else {
-        await jcfService.crearTarea(datos);
+        await jcfService.crearAprendiz(datos);
       }
       cargarTareas();
       cerrarModal();
