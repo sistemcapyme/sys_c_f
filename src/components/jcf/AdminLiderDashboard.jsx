@@ -10,7 +10,6 @@ const AdminLiderDashboard = () => {
   const location = useLocation();
   const path = location.pathname;
 
-  const [vistaActual, setVistaActual] = useState('menu');
   const [usuariosLideres, setUsuariosLideres] = useState([]);
   const [hoveredRow, setHoveredRow] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -21,10 +20,7 @@ const AdminLiderDashboard = () => {
 
   useEffect(() => {
     if (path.includes('lideres')) {
-      setVistaActual('crud');
       cargarLideres();
-    } else {
-      setVistaActual('menu');
     }
   }, [path]);
 
@@ -95,7 +91,7 @@ const AdminLiderDashboard = () => {
     color: 'var(--gray-900)', background: '#fff', outline: 'none'
   };
 
-  if (vistaActual === 'crud') {
+  if (path.includes('lideres')) {
     return (
       <Layout>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
@@ -121,7 +117,7 @@ const AdminLiderDashboard = () => {
                 <UsersRound style={{ width: '28px', height: '28px', color: 'var(--capyme-blue-mid)' }} />
                 Usuarios Líderes
               </h1>
-              <p style={{ fontSize: '14px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>
+              <p style={{ fontSize: '14px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif" }}>
                 Gestión de líderes registrados en el sistema
               </p>
             </div>

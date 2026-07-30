@@ -78,7 +78,7 @@ const SectionTitle = ({ icon: Icon, text }) => (
 );
 
 const ErrorMsg = ({ text }) => (
-  <p style={{ marginTop: '4px', fontSize: '12px', color: '#EF4444', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: "'DM Sans', sans-serif" }}>
+  <p style={{ marginTop: '4px', fontSize: '12px', color: '#EF4444', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>
     <AlertTriangle style={{ width: '12px', height: '12px' }} /> {text}
   </p>
 );
@@ -242,51 +242,30 @@ const JovenesJCF = () => {
   );
 
   const inputBaseStyle = {
-    width: '100%',
-    padding: '10px 12px',
-    border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-md)',
-    fontSize: '14px',
-    fontFamily: "'DM Sans', sans-serif",
-    color: 'var(--gray-900)',
-    background: '#fff',
-    outline: 'none',
-    transition: 'all 200ms ease',
+    width: '100%', padding: '10px 12px', border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-md)', fontSize: '14px', fontFamily: "'DM Sans', sans-serif",
+    color: 'var(--gray-900)', background: '#fff', outline: 'none', transition: 'all 200ms ease'
   };
 
   const inputWithIconStyle = { ...inputBaseStyle, paddingLeft: '38px' };
   const inputErrorStyle = { borderColor: '#EF4444', boxShadow: '0 0 0 2px rgba(239,68,68,0.15)' };
 
   const labelStyle = {
-    display: 'block',
-    fontSize: '13px',
-    fontWeight: 600,
-    color: 'var(--gray-600)',
-    marginBottom: '6px',
-    fontFamily: "'DM Sans', sans-serif",
+    display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-600)',
+    marginBottom: '6px', fontFamily: "'DM Sans', sans-serif"
   };
 
   const selectStyle = {
-    ...inputBaseStyle,
-    appearance: 'none',
-    cursor: 'pointer',
+    ...inputBaseStyle, appearance: 'none', cursor: 'pointer'
   };
 
   const navBtnStyle = (isActive) => ({
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '10px 16px',
+    display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px',
     background: isActive ? 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))' : '#fff',
-    color: isActive ? '#fff' : 'var(--gray-600)',
-    border: isActive ? 'none' : '1px solid var(--border)',
-    borderRadius: 'var(--radius-md)',
-    fontFamily: "'Plus Jakarta Sans', sans-serif",
-    fontSize: '13px',
-    fontWeight: 600,
-    cursor: 'pointer',
-    boxShadow: isActive ? '0 2px 8px rgba(31,78,158,0.28)' : 'none',
-    transition: 'all 200ms ease'
+    color: isActive ? '#fff' : 'var(--gray-600)', border: isActive ? 'none' : '1px solid var(--border)',
+    borderRadius: 'var(--radius-md)', fontFamily: "'Plus Jakarta Sans', sans-serif",
+    fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+    boxShadow: isActive ? '0 2px 8px rgba(31,78,158,0.28)' : 'none', transition: 'all 200ms ease'
   });
 
   return (
@@ -323,7 +302,7 @@ const JovenesJCF = () => {
               <Users style={{ width: '28px', height: '28px', color: 'var(--capyme-blue-mid)' }} />
               Distribución de Jóvenes
             </h1>
-            <p style={{ fontSize: '14px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif" }}>
+            <p style={{ fontSize: '14px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>
               {jovenesFiltrados.length} joven{jovenesFiltrados.length !== 1 ? 'es' : ''} registrado{jovenesFiltrados.length !== 1 ? 's' : ''}
             </p>
           </div>
