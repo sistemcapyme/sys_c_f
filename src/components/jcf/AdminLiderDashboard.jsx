@@ -1,23 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../common/Layout';
-import { Users, Plus, ArrowLeft, Mail, Shield, X, Save, LayoutDashboard } from 'lucide-react';
+import { Users, Plus, ArrowLeft, Mail, Shield, X, Save, LayoutDashboard, UserCheck, UsersRound } from 'lucide-react';
 import { jcfService } from '../../services/jcfService';
 import axios from '../../services/axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const AdminLiderDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const path = location.pathname;
+
   const [vistaActual, setVistaActual] = useState('menu');
   const [usuariosLideres, setUsuariosLideres] = useState([]);
   const [hoveredRow, setHoveredRow] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
-    nombre: '',
-    apellido: '',
-    email: '',
-    password: '',
-    activo: true
+    nombre: '', apellido: '', email: '', password: '', activo: true
   });
 
   useEffect(() => {
@@ -29,32 +28,23 @@ const AdminLiderDashboard = () => {
   const cargarLideres = async () => {
     try {
       const res = await jcfService.obtenerLideres();
-      if (res.success) {
-        setUsuariosLideres(res.data);
-      }
+      const dataArray = Array.isArray(res) ? res : (res?.data && Array.isArray(res.data) ? res.data : []);
+      setUsuariosLideres(dataArray);
     } catch (err) {
       console.error(err);
+      setUsuariosLideres([]);
     }
   };
 
   const handleOpenModal = (lider = null) => {
     if (lider) {
       setFormData({
-        nombre: lider.nombre || '',
-        apellido: lider.apellido || '',
-        email: lider.email || '',
-        password: '',
-        activo: lider.activo
+        nombre: lider.nombre || '', apellido: lider.apellido || '',
+        email: lider.email || '', password: '', activo: lider.activo
       });
       setEditingId(lider.id);
     } else {
-      setFormData({
-        nombre: '',
-        apellido: '',
-        email: '',
-        password: '',
-        activo: true
-      });
+      setFormData({ nombre: '', apellido: '', email: '', password: '', activo: true });
       setEditingId(null);
     }
     setIsModalOpen(true);
@@ -67,38 +57,34 @@ const AdminLiderDashboard = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       if (editingId) {
-        // Petición para editar (si la implementas en el futuro)
         await axios.put(`/jcf/lideres/${editingId}`, formData);
       } else {
-        // Petición POST real para crear el líder
         await axios.post('/jcf/lideres', formData);
       }
-      
-      handleCloseModal(); // Cierra la ventana
-      cargarLideres();    // Vuelve a descargar la lista para que aparezca el nuevo
-      
+      handleCloseModal();
+      cargarLideres();
     } catch (error) {
       console.error('Error al guardar el líder:', error);
     }
   };
 
-  const btnStyle = {
-    display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', 
-    background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', 
-    color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', 
-    fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '14px', fontWeight: 600, 
-    cursor: 'pointer', boxShadow: '0 2px 8px rgba(31,78,158,0.28)', transition: 'all 200ms ease'
-  };
+  const safeLideres = Array.isArray(usuariosLideres) ? usuariosLideres : [];
+
+  const navBtnStyle = (isActive) => ({
+    display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px',
+    background: isActive ? 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))' : '#fff',
+    color: isActive ? '#fff' : 'var(--gray-600)', border: isActive ? 'none' : '1px solid var(--border)',
+    borderRadius: 'var(--radius-md)', fontFamily: "'Plus Jakarta Sans', sans-serif",
+    fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+    boxShadow: isActive ? '0 2px 8px rgba(31,78,158,0.28)' : 'none', transition: 'all 200ms ease'
+  });
 
   const inputStyle = {
     width: '100%', padding: '10px 12px', border: '1px solid var(--border)', 
@@ -111,10 +97,25 @@ const AdminLiderDashboard = () => {
       <Layout>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
           
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <button onClick={() => setVistaActual('crud')} style={navBtnStyle(true)}>
+              <UsersRound style={{width: 16, height: 16}}/> Gestionar Líderes
+            </button>
+            <button onClick={() => navigate('/jcf/encargados')} style={navBtnStyle(false)}>
+              <UserCheck style={{width: 16, height: 16}}/> Gestionar Encargados
+            </button>
+            <button onClick={() => navigate('/jcf/jovenes')} style={navBtnStyle(false)}>
+              <Users style={{width: 16, height: 16}}/> Distribución de Jóvenes
+            </button>
+            <button onClick={() => navigate('/jcf/kanban')} style={navBtnStyle(false)}>
+              <LayoutDashboard style={{width: 16, height: 16}}/> Tablero Kanban
+            </button>
+          </div>
+
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
             <div>
               <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '26px', fontWeight: 800, color: 'var(--gray-900)', letterSpacing: '-0.02em', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Users style={{ width: '28px', height: '28px', color: 'var(--capyme-blue-mid)' }} />
+                <UsersRound style={{ width: '28px', height: '28px', color: 'var(--capyme-blue-mid)' }} />
                 Usuarios Líderes
               </h1>
               <p style={{ fontSize: '14px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif" }}>
@@ -124,17 +125,15 @@ const AdminLiderDashboard = () => {
             <div style={{ display: 'flex', gap: '10px' }}>
               <button 
                 onClick={() => setVistaActual('menu')}
-                style={{ ...btnStyle, background: '#fff', color: 'var(--gray-700)', border: '1px solid var(--border)', boxShadow: 'none' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-50)'}
-                onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: '#fff', color: 'var(--gray-700)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 200ms ease' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-50)'} onMouseLeave={e => e.currentTarget.style.background = '#fff'}
               >
-                <ArrowLeft style={{ width: '16px', height: '16px' }} /> Volver
+                <ArrowLeft style={{ width: '16px', height: '16px' }} /> Volver al Menú
               </button>
               <button 
                 onClick={() => handleOpenModal()}
-                style={btnStyle}
-                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '14px', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 8px rgba(31,78,158,0.28)', transition: 'all 200ms ease' }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
               >
                 <Plus style={{ width: '16px', height: '16px' }} /> Nuevo Líder
               </button>
@@ -154,7 +153,7 @@ const AdminLiderDashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {usuariosLideres.map((usuario) => (
+                  {safeLideres.map((usuario) => (
                     <tr 
                       key={usuario.id}
                       onMouseEnter={() => setHoveredRow(usuario.id)}
@@ -198,7 +197,7 @@ const AdminLiderDashboard = () => {
                       </td>
                     </tr>
                   ))}
-                  {usuariosLideres.length === 0 && (
+                  {safeLideres.length === 0 && (
                     <tr>
                       <td colSpan="5" style={{ padding: '24px', textAlign: 'center', color: 'var(--gray-500)', fontSize: '14px', fontFamily: "'DM Sans', sans-serif" }}>
                         No hay líderes registrados.
@@ -254,7 +253,7 @@ const AdminLiderDashboard = () => {
                   <button type="button" onClick={handleCloseModal} style={{ padding: '10px 20px', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', background: '#fff', color: 'var(--gray-700)', fontSize: '14px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", cursor: 'pointer' }}>
                     Cancelar
                   </button>
-                  <button type="submit" style={{ ...btnStyle, margin: 0 }}>
+                  <button type="submit" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '14px', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 8px rgba(31,78,158,0.28)' }}>
                     <Save style={{ width: '16px', height: '16px' }} />
                     {editingId ? 'Guardar Cambios' : 'Crear Líder'}
                   </button>
@@ -275,41 +274,48 @@ const AdminLiderDashboard = () => {
             <Shield style={{ width: '32px', height: '32px', color: 'var(--capyme-blue-mid)' }} />
           </div>
           <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '28px', fontWeight: 800, color: 'var(--gray-900)', margin: '0 0 8px 0', letterSpacing: '-0.02em' }}>
-            Dashboard Líder JCF
+            Módulo Jóvenes JCF
           </h1>
           <p style={{ fontSize: '15px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif", maxWidth: '400px', margin: 0, lineHeight: 1.5 }}>
-            Administra los usuarios líderes encargados de supervisar a los jóvenes de Construyendo el Futuro.
+            Selecciona una opción para administrar a los líderes, encargados, distribución y el tablero de jóvenes de Construyendo el Futuro.
           </p>
         </div>
         
-        <div style={{ width: '100%', maxWidth: '320px', marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ width: '100%', maxWidth: '340px', marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <button
             onClick={() => setVistaActual('crud')}
             style={{ width: '100%', padding: '16px', background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', color: '#fff', border: 'none', borderRadius: 'var(--radius-lg)', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '16px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(31,78,158,0.25)', transition: 'all 200ms ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
-            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
           >
-            <Users style={{ width: '20px', height: '20px' }} />
+            <UsersRound style={{ width: '20px', height: '20px' }} />
             Gestionar Líderes
           </button>
 
           <button
             onClick={() => navigate('/jcf/encargados')}
             style={{ width: '100%', padding: '16px', background: 'linear-gradient(135deg, #10B981, #059669)', color: '#fff', border: 'none', borderRadius: 'var(--radius-lg)', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '16px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)', transition: 'all 200ms ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
-            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
           >
-            <Users style={{ width: '20px', height: '20px' }} />
+            <UserCheck style={{ width: '20px', height: '20px' }} />
             Gestionar Encargados
           </button>
+
+          <button
+            onClick={() => navigate('/jcf/jovenes')}
+            style={{ width: '100%', padding: '16px', background: 'linear-gradient(135deg, #F59E0B, #D97706)', color: '#fff', border: 'none', borderRadius: 'var(--radius-lg)', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '16px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(245, 158, 11, 0.25)', transition: 'all 200ms ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            <Users style={{ width: '20px', height: '20px' }} />
+            Distribución de Jóvenes
+          </button>
+
           <button
             onClick={() => navigate('/jcf/kanban')}
             style={{ width: '100%', padding: '16px', background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)', color: '#fff', border: 'none', borderRadius: 'var(--radius-lg)', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '16px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(139, 92, 246, 0.25)', transition: 'all 200ms ease', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
-            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
           >
             <LayoutDashboard style={{ width: '20px', height: '20px' }} />
-            Tablero Kanban (Postulaciones)
+            Tablero Kanban
           </button>
         </div>
       </div>
