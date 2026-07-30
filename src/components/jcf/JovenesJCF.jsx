@@ -126,7 +126,7 @@ const JovenesJCF = () => {
   const cargarDatos = async () => {
     try {
       setLoading(true);
-      const resJovenes = await jcfService.obtenerJovenes();
+      const resJovenes = await jcfService.obtenerAprendices();
       const arrJovenes = Array.isArray(resJovenes) ? resJovenes : (resJovenes?.data && Array.isArray(resJovenes.data) ? resJovenes.data : []);
       setJovenes(arrJovenes);
       
@@ -199,10 +199,10 @@ const JovenesJCF = () => {
     try {
       setSubmitting(true);
       if (modalMode === 'create') {
-        await jcfService.crearJoven(formData);
+        await jcfService.crearAprendiz(formData);
         toast.success('Registro creado exitosamente');
       } else {
-        await jcfService.actualizarJoven(selectedJoven.id, formData);
+        await jcfService.actualizarAprendiz(selectedJoven.id, formData);
         toast.success('Registro actualizado exitosamente');
       }
       handleCloseModal();
@@ -223,7 +223,7 @@ const JovenesJCF = () => {
       confirmLabel: 'Sí, eliminar',
       onConfirm: async () => {
         try {
-          await jcfService.eliminarJoven(joven.id);
+          await jcfService.eliminarAprendiz(joven.id);
           toast.success('Registro eliminado exitosamente');
           cargarDatos();
         } catch (error) {
@@ -242,30 +242,51 @@ const JovenesJCF = () => {
   );
 
   const inputBaseStyle = {
-    width: '100%', padding: '10px 12px', border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-md)', fontSize: '14px', fontFamily: "'DM Sans', sans-serif",
-    color: 'var(--gray-900)', background: '#fff', outline: 'none', transition: 'all 200ms ease'
+    width: '100%',
+    padding: '10px 12px',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-md)',
+    fontSize: '14px',
+    fontFamily: "'DM Sans', sans-serif",
+    color: 'var(--gray-900)',
+    background: '#fff',
+    outline: 'none',
+    transition: 'all 200ms ease',
   };
 
   const inputWithIconStyle = { ...inputBaseStyle, paddingLeft: '38px' };
   const inputErrorStyle = { borderColor: '#EF4444', boxShadow: '0 0 0 2px rgba(239,68,68,0.15)' };
 
   const labelStyle = {
-    display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-600)',
-    marginBottom: '6px', fontFamily: "'DM Sans', sans-serif"
+    display: 'block',
+    fontSize: '13px',
+    fontWeight: 600,
+    color: 'var(--gray-600)',
+    marginBottom: '6px',
+    fontFamily: "'DM Sans', sans-serif",
   };
 
   const selectStyle = {
-    ...inputBaseStyle, appearance: 'none', cursor: 'pointer'
+    ...inputBaseStyle,
+    appearance: 'none',
+    cursor: 'pointer',
   };
 
   const navBtnStyle = (isActive) => ({
-    display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '10px 16px',
     background: isActive ? 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))' : '#fff',
-    color: isActive ? '#fff' : 'var(--gray-600)', border: isActive ? 'none' : '1px solid var(--border)',
-    borderRadius: 'var(--radius-md)', fontFamily: "'Plus Jakarta Sans', sans-serif",
-    fontSize: '13px', fontWeight: 600, cursor: 'pointer',
-    boxShadow: isActive ? '0 2px 8px rgba(31,78,158,0.28)' : 'none', transition: 'all 200ms ease'
+    color: isActive ? '#fff' : 'var(--gray-600)',
+    border: isActive ? 'none' : '1px solid var(--border)',
+    borderRadius: 'var(--radius-md)',
+    fontFamily: "'Plus Jakarta Sans', sans-serif",
+    fontSize: '13px',
+    fontWeight: 600,
+    cursor: 'pointer',
+    boxShadow: isActive ? '0 2px 8px rgba(31,78,158,0.28)' : 'none',
+    transition: 'all 200ms ease'
   });
 
   return (
@@ -302,7 +323,7 @@ const JovenesJCF = () => {
               <Users style={{ width: '28px', height: '28px', color: 'var(--capyme-blue-mid)' }} />
               Distribución de Jóvenes
             </h1>
-            <p style={{ fontSize: '14px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>
+            <p style={{ fontSize: '14px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif" }}>
               {jovenesFiltrados.length} joven{jovenesFiltrados.length !== 1 ? 'es' : ''} registrado{jovenesFiltrados.length !== 1 ? 's' : ''}
             </p>
           </div>
@@ -444,13 +465,13 @@ const JovenesJCF = () => {
 
                 <div>
                   <label style={labelStyle}>Link de Papeles del Joven *</label>
-                  <input type="url" value={formData.linkPapeles} onChange={(e) => handleChange('linkPapeles', e.target.value)} placeholder="https://drive.google.com/..." style={{ ...inputBaseStyle, ...(formErrors.linkPapeles ? inputErrorStyle : {}) }} onFocus={e => { if (!formErrors.linkPapeles) { e.target.style.borderColor = 'var(--capyme-blue-mid)'; e.target.style.boxShadow = '0 0 0 3px rgba(43,91,166,0.12)'; } }} onBlur={e => { if (!formErrors.linkPapeles) { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; } }} />
+                  <input type="url" value={formData.linkPapeles} onChange={(e) => handleChange('linkPapeles', e.target.value)} placeholder="www.drive.google.com..." style={{ ...inputBaseStyle, ...(formErrors.linkPapeles ? inputErrorStyle : {}) }} onFocus={e => { if (!formErrors.linkPapeles) { e.target.style.borderColor = 'var(--capyme-blue-mid)'; e.target.style.boxShadow = '0 0 0 3px rgba(43,91,166,0.12)'; } }} onBlur={e => { if (!formErrors.linkPapeles) { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; } }} />
                   {formErrors.linkPapeles && <ErrorMsg text={formErrors.linkPapeles} />}
                 </div>
 
                 <div>
                   <label style={labelStyle}>Usuario y Contraseña Plataforma JCF *</label>
-                  <textarea value={formData.credencialesJcf} onChange={(e) => handleChange('credencialesJcf', e.target.value)} placeholder="Usuario: ...&#10;Contraseña: ..." rows="3" style={{ ...inputBaseStyle, resize: 'vertical', ...(formErrors.credencialesJcf ? inputErrorStyle : {}) }} onFocus={e => { if (!formErrors.credencialesJcf) { e.target.style.borderColor = 'var(--capyme-blue-mid)'; e.target.style.boxShadow = '0 0 0 3px rgba(43,91,166,0.12)'; } }} onBlur={e => { if (!formErrors.credencialesJcf) { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; } }} />
+                  <textarea value={formData.credencialesJcf} onChange={(e) => handleChange('credencialesJcf', e.target.value)} placeholder="Usuario: ... Contraseña: ..." rows="3" style={{ ...inputBaseStyle, resize: 'vertical', ...(formErrors.credencialesJcf ? inputErrorStyle : {}) }} onFocus={e => { if (!formErrors.credencialesJcf) { e.target.style.borderColor = 'var(--capyme-blue-mid)'; e.target.style.boxShadow = '0 0 0 3px rgba(43,91,166,0.12)'; } }} onBlur={e => { if (!formErrors.credencialesJcf) { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; } }} />
                   {formErrors.credencialesJcf && <ErrorMsg text={formErrors.credencialesJcf} />}
                 </div>
 
@@ -466,7 +487,7 @@ const JovenesJCF = () => {
 
                 <div>
                   <label style={labelStyle}>Link de Imagen de la Información del Negocio *</label>
-                  <input type="url" value={formData.linkImagenNegocio} onChange={(e) => handleChange('linkImagenNegocio', e.target.value)} placeholder="https://..." style={{ ...inputBaseStyle, ...(formErrors.linkImagenNegocio ? inputErrorStyle : {}) }} onFocus={e => { if (!formErrors.linkImagenNegocio) { e.target.style.borderColor = 'var(--capyme-blue-mid)'; e.target.style.boxShadow = '0 0 0 3px rgba(43,91,166,0.12)'; } }} onBlur={e => { if (!formErrors.linkImagenNegocio) { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; } }} />
+                  <input type="url" value={formData.linkImagenNegocio} onChange={(e) => handleChange('linkImagenNegocio', e.target.value)} placeholder="www.drive.google.com..." style={{ ...inputBaseStyle, ...(formErrors.linkImagenNegocio ? inputErrorStyle : {}) }} onFocus={e => { if (!formErrors.linkImagenNegocio) { e.target.style.borderColor = 'var(--capyme-blue-mid)'; e.target.style.boxShadow = '0 0 0 3px rgba(43,91,166,0.12)'; } }} onBlur={e => { if (!formErrors.linkImagenNegocio) { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; } }} />
                   {formErrors.linkImagenNegocio && <ErrorMsg text={formErrors.linkImagenNegocio} />}
                 </div>
 

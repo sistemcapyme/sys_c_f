@@ -27,7 +27,6 @@ const KanbanJCF = () => {
   const cargarTareas = async () => {
     try {
       const res = await jcfService.obtenerAprendices();
-      // SOLUCIÓN AL ERROR: Asegurar estrictamente que dataArray sea un arreglo
       const dataArray = Array.isArray(res) ? res : (res?.data && Array.isArray(res.data) ? res.data : []);
       setTareas(dataArray);
     } catch (error) {
@@ -65,7 +64,6 @@ const KanbanJCF = () => {
     window.location.href = '/login';
   };
 
-  // Prevenir error `.filter is not a function` en el render
   const safeTareas = Array.isArray(tareas) ? tareas : [];
 
   const navBtnStyle = (isActive) => ({
@@ -82,7 +80,7 @@ const KanbanJCF = () => {
       
       {isAdminOrLider && (
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          <button onClick={() => navigate('/jcf')} style={navBtnStyle(path === '/jcf' || path.includes('lideres'))}>
+          <button onClick={() => navigate('/jcf/lideres')} style={navBtnStyle(path === '/jcf' || path.includes('lideres'))}>
             <UsersRound style={{width: 16, height: 16}}/> Gestionar Líderes
           </button>
           <button onClick={() => navigate('/jcf/encargados')} style={navBtnStyle(path.includes('encargados'))}>
@@ -162,7 +160,6 @@ const KanbanJCF = () => {
     </div>
   );
 
-  // SI ES ENCARGADO, SE MUESTRA SIN EL LATERAL MENU (LAYOUT)
   if (isEncargado) {
     return (
       <div style={{ padding: '20px', minHeight: '100vh', backgroundColor: '#f3f4f6', fontFamily: "'DM Sans', sans-serif" }}>
@@ -180,7 +177,6 @@ const KanbanJCF = () => {
     );
   }
 
-  // SI ES ADMIN O LÍDER, SE MUESTRA DENTRO DE LAYOUT
   return <Layout>{KanbanContent}</Layout>;
 };
 
