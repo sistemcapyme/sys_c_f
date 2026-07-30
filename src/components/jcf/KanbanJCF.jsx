@@ -14,9 +14,10 @@ const KanbanJCF = () => {
   const cargarTareas = async () => {
     try {
       const data = await jcfService.obtenerAprendices();
-      setTareas(data);
+      setTareas(Array.isArray(data) ? data : (data?.data || []));
     } catch (error) {
       console.error(error);
+      setTareas([]);
     }
   };
 
@@ -53,7 +54,7 @@ const KanbanJCF = () => {
       <div className="kanban-board">
         <div className="kanban-column">
           <h3>Pendientes</h3>
-          {tareas.filter(t => t.estado === 'pendiente').map(tarea => (
+          {(Array.isArray(tareas) ? tareas : []).filter(t => t.estado === 'pendiente').map(tarea => (
             <div key={tarea.id} className="kanban-card" onClick={() => abrirModal(tarea)}>
               <h4>{tarea.titulo}</h4>
               <p>{tarea.descripcion}</p>
@@ -62,7 +63,7 @@ const KanbanJCF = () => {
         </div>
         <div className="kanban-column">
           <h3>En Progreso</h3>
-          {tareas.filter(t => t.estado === 'en_progreso').map(tarea => (
+          {(Array.isArray(tareas) ? tareas : []).filter(t => t.estado === 'en_progreso').map(tarea => (
             <div key={tarea.id} className="kanban-card" onClick={() => abrirModal(tarea)}>
               <h4>{tarea.titulo}</h4>
               <p>{tarea.descripcion}</p>
@@ -71,7 +72,7 @@ const KanbanJCF = () => {
         </div>
         <div className="kanban-column">
           <h3>Completado</h3>
-          {tareas.filter(t => t.estado === 'completado').map(tarea => (
+          {(Array.isArray(tareas) ? tareas : []).filter(t => t.estado === 'completado').map(tarea => (
             <div key={tarea.id} className="kanban-card" onClick={() => abrirModal(tarea)}>
               <h4>{tarea.titulo}</h4>
               <p>{tarea.descripcion}</p>

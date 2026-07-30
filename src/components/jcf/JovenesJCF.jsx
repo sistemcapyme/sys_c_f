@@ -14,9 +14,10 @@ const JovenesJCF = () => {
   const cargarJovenes = async () => {
     try {
       const data = await jcfService.obtenerJovenes();
-      setJovenes(data);
+      setJovenes(Array.isArray(data) ? data : (data?.data || []));
     } catch (error) {
       console.error(error);
+      setJovenes([]);
     }
   };
 
@@ -69,7 +70,7 @@ const JovenesJCF = () => {
           </tr>
         </thead>
         <tbody>
-          {jovenes.map((joven) => (
+          {(Array.isArray(jovenes) ? jovenes : []).map((joven) => (
             <tr key={joven.id}>
               <td>{joven.nombreCompleto}</td>
               <td>{joven.nombreNegocio}</td>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import usuariosService from '../../services/usuariosService';
+import { jcfService } from '../../services/jcfService';
 
 const ModalJovenJCF = ({ isOpen, onClose, onSave, jovenData }) => {
   const [formData, setFormData] = useState({
@@ -32,10 +32,11 @@ const ModalJovenJCF = ({ isOpen, onClose, onSave, jovenData }) => {
 
   const cargarEncargados = async () => {
     try {
-      const data = await usuariosService.obtenerUsuariosPorRol('encargado');
-      setEncargados(data);
+      const data = await jcfService.obtenerEncargados();
+      setEncargados(Array.isArray(data) ? data : (data?.data || []));
     } catch (error) {
       console.error(error);
+      setEncargados([]);
     }
   };
 
@@ -86,7 +87,7 @@ const ModalJovenJCF = ({ isOpen, onClose, onSave, jovenData }) => {
             <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#0056b3', fontSize: '1.1em' }}>Encargarlo a:</label>
             <select name="encargadoId" value={formData.encargadoId} onChange={handleChange} required style={{ width: '100%', padding: '10px', border: '2px solid #0056b3' }}>
               <option value="">Seleccione un encargado</option>
-              {encargados.map((encargado) => (
+              {(Array.isArray(encargados) ? encargados : []).map((encargado) => (
                 <option key={encargado.id} value={encargado.id}>
                   {encargado.nombre}
                 </option>
