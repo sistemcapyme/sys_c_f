@@ -159,7 +159,7 @@ const JovenesJCF = () => {
                       formData.credencialesJcf.trim() !== '' && 
                       formData.nombreNegocio.trim() !== '' && 
                       formData.linkImagenNegocio.trim() !== '' && 
-                      formData.encargadoId !== '';
+                      String(formData.encargadoId).trim() !== '';
 
   const handleOpenModal = (mode, joven = null) => {
     setModalMode(mode);
@@ -198,11 +198,15 @@ const JovenesJCF = () => {
     if (!validateForm()) return;
     try {
       setSubmitting(true);
+      const payload = {
+        ...formData,
+        encargadoId: parseInt(formData.encargadoId, 10)
+      };
       if (modalMode === 'create') {
-        await jcfService.crearAprendiz(formData);
+        await jcfService.crearAprendiz(payload);
         toast.success('Registro creado exitosamente');
       } else {
-        await jcfService.actualizarAprendiz(selectedJoven.id, formData);
+        await jcfService.actualizarAprendiz(selectedJoven.id, payload);
         toast.success('Registro actualizado exitosamente');
       }
       handleCloseModal();
@@ -368,7 +372,7 @@ const JovenesJCF = () => {
                 <tbody>
                   {jovenesFiltrados.length > 0 ? (
                     jovenesFiltrados.map((joven) => {
-                      const nombreEncargado = safeEncargados.find(e => e.id === joven.encargadoId)?.nombre || joven.encargadoNombre || 'No asignado';
+                      const nombreEncargado = safeEncargados.find(e => String(e.id) === String(joven.encargadoId))?.nombre || joven.encargadoNombre || 'No asignado';
                       
                       return (
                         <tr
