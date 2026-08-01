@@ -35,10 +35,6 @@ export const jcfService = {
   obtenerEncargados: async () => (await api.get('/encargados')).data,
   crearJoven: async (data) => {
     const payload = data instanceof FormData ? Object.fromEntries(data) : data
-    return (await api.post('/jcf/jovenes', payload)).data
-  },
-  createAprendiz: async (data) => {
-    const payload = data instanceof FormData ? Object.fromEntries(data) : data
-    return (await api.post('/jcf/aprendices', payload)).data
+    return (await api.post('/jcf', payload)).data
   }
 }

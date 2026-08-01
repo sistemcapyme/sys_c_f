@@ -31,7 +31,7 @@ const InfoRow = ({ label, value, icon: Icon, isLink }) => (
 );
 
 const ModalAprendiz = ({ aprendiz, onClose, onAsignarEncargado, onActualizarEstado }) => {
-  const [encargado, setEncargado] = useState(aprendiz?.encargado_id || '');
+  const [encargado, setEncargado] = useState(aprendiz?.encargadoId || '');
   const [lideres, setLideres] = useState([]);
 
   useEffect(() => {
@@ -48,10 +48,11 @@ const ModalAprendiz = ({ aprendiz, onClose, onAsignarEncargado, onActualizarEsta
 
   if (!aprendiz) return null;
 
-  const estadoActual = aprendiz.estado_kanban || 'PENDIENTE';
+  const estadoActual = aprendiz.estadoKanban || 'PENDIENTE';
+  const nombreCompleto = aprendiz.nombreCompleto || `${aprendiz.nombre || ''} ${aprendiz.apellido || ''}`.trim();
 
   const guardarAsignacion = () => {
-    if (onAsignarEncargado && encargado !== aprendiz.encargado_id) {
+    if (onAsignarEncargado && encargado !== aprendiz.encargadoId) {
       onAsignarEncargado(aprendiz.id, encargado);
     }
   };
@@ -101,18 +102,18 @@ const ModalAprendiz = ({ aprendiz, onClose, onAsignarEncargado, onActualizarEsta
               <div>
                 <SectionTitle icon={User} text="Datos del Aprendiz" />
                 <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--gray-50)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
-                  <InfoRow label="Nombre Completo" value={`${aprendiz.nombre} ${aprendiz.apellido}`} />
+                  <InfoRow label="Nombre Completo" value={nombreCompleto} />
                   <InfoRow label="CURP" value={aprendiz.curp} />
                   <InfoRow label="Correo" value={aprendiz.correo} />
                   <InfoRow label="Teléfono" value={aprendiz.telefono} />
-                  <InfoRow label="Documentos (Drive)" value={aprendiz.url_recurso} isLink={true} />
+                  <InfoRow label="Documentos (Drive)" value={aprendiz.linkDocumentos || aprendiz.urlRecurso} isLink={true} />
                 </div>
               </div>
 
               <div>
                 <SectionTitle icon={Briefcase} text="Datos del Negocio" />
                 <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--gray-50)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
-                  <InfoRow label="Razón Social / Nombre" value={aprendiz.negocio?.nombre_negocio} />
+                  <InfoRow label="Razón Social / Nombre" value={aprendiz.negocio?.nombreNegocio} />
                   <InfoRow label="Ubicación" value={aprendiz.negocio ? `${aprendiz.negocio.ciudad}, ${aprendiz.negocio.estado}` : ''} icon={MapPin} />
                   <InfoRow label="Dirección Exacta" value={aprendiz.negocio?.direccion} icon={MapPin} />
                 </div>
