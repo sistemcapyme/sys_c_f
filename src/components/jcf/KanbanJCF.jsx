@@ -3,7 +3,7 @@ import Layout from '../common/Layout';
 import ModalAprendiz from './ModalAprendiz';
 import { jcfService } from '../../services/jcfService';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Users, UserCheck, LayoutDashboard, UsersRound, LogOut, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { Users, UserCheck, LayoutDashboard, UsersRound, LogOut, Clock, RefreshCw, CheckCircle2, ArrowRight, ArrowLeft } from 'lucide-react';
 
 const KanbanJCF = () => {
   const authStorage = JSON.parse(localStorage.getItem('auth-storage') || '{}');
@@ -49,15 +49,6 @@ const KanbanJCF = () => {
     setModalAbierto(false);
   };
 
-  const handleAsignarEncargado = async (id, encargadoId) => {
-    try {
-      await jcfService.asignarEncargado(id, encargadoId);
-      cargarJovenes();
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   const handleActualizarEstado = async (id, estadoKanban) => {
     try {
       await jcfService.actualizarEstado(id, estadoKanban);
@@ -86,10 +77,18 @@ const KanbanJCF = () => {
   });
 
   const columnas = [
-    { key: 'PENDIENTE', titulo: 'Pendientes', color: '#F59E0B', icon: Clock },
-    { key: 'APROBADO', titulo: 'Aprobados', color: '#10B981', icon: CheckCircle2 },
-    { key: 'RECHAZADO', titulo: 'Rechazados', color: '#EF4444', icon: XCircle }
+    { key: 'ENCARGADO', titulo: 'Jóvenes Encargados', color: '#F59E0B', icon: Clock },
+    { key: 'EN_PROCESO', titulo: 'Joven en Proceso', color: '#3B82F6', icon: RefreshCw },
+    { key: 'POSTULADO', titulo: 'Joven Postulado', color: '#10B981', icon: CheckCircle2 }
   ];
+
+  const ordenEstados = columnas.map(c => c.key);
+
+  const arrowBtnStyle = {
+    width: '26px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    border: '1px solid var(--border)', borderRadius: '6px', background: '#fff', cursor: 'pointer',
+    color: 'var(--gray-500)', transition: 'all 150ms ease'
+  };
 
   const KanbanContent = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', width: '100%' }}>
@@ -115,10 +114,10 @@ const KanbanJCF = () => {
         <div className="kanban-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '26px', fontWeight: 800, color: 'var(--gray-900)', margin: 0 }}>
-              Jóvenes por Postular
+              Mi Tablero de Jóvenes
             </h2>
             <p style={{ fontSize: '14px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif", margin: '4px 0 0 0' }}>
-              {isEncargado ? 'Jóvenes que tienes asignados para postular' : 'Seguimiento de postulaciones de todos los encargados'}
+              Jóvenes que te asignaron a ti para postular
             </p>
           </div>
         </div>
@@ -130,8 +129,8 @@ const KanbanJCF = () => {
           </div>
         ) : (
           <div className="kanban-board" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(250px, 1fr))', gap: '20px', overflowX: 'auto' }}>
-            {columnas.map(columna => {
-              const jovenesColumna = safeJovenes.filter(j => (j.estadoKanban || 'PENDIENTE') === columna.key);
+            {columnas.map((columna, colIndex) => {
+              const jovenesColumna = safeJovenes.filter(j => (j.estadoKanban || 'ENCARGADO') === columna.key);
               const ColIcon = columna.icon;
               return (
                 <div key={columna.key} className="kanban-column" style={{ background: 'var(--gray-50)', padding: '16px', borderRadius: 'var(--radius-md)' }}>
@@ -146,20 +145,39 @@ const KanbanJCF = () => {
                   ) : (
                     jovenesColumna.map(joven => (
                       <div key={joven.id} className="kanban-card" onClick={() => abrirModal(joven)} style={{ background: '#fff', padding: '16px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', marginBottom: '12px', cursor: 'pointer', border: '1px solid var(--border)' }}>
-                        <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: 'var(--gray-900)', fontFamily: "'Plus Jakarta Sans', sans-serif", display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', color: 'var(--gray-900)', fontFamily: "'Plus Jakarta Sans', sans-serif", display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <ColIcon style={{ width: '14px', height: '14px', color: columna.color }} />
                           {nombreCompleto(joven) || 'Sin nombre'}
                         </h4>
                         {joven.linkNegocio && (
-                          <p style={{ margin: 0, fontSize: '12px', color: 'var(--gray-600)', fontFamily: "'DM Sans', sans-serif" }}>
+                          <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: 'var(--gray-600)', fontFamily: "'DM Sans', sans-serif" }}>
                             {joven.linkNegocio}
                           </p>
                         )}
-                        {isAdminOrLider && (
-                          <p style={{ margin: '6px 0 0 0', fontSize: '11px', color: 'var(--gray-400)', fontFamily: "'DM Sans', sans-serif" }}>
-                            Encargado: {joven.encargado ? `${joven.encargado.nombre} ${joven.encargado.apellido}` : 'Sin asignar'}
-                          </p>
-                        )}
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
+                          {colIndex > 0 && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleActualizarEstado(joven.id, ordenEstados[colIndex - 1]); }}
+                              title={`Regresar a ${columnas[colIndex - 1].titulo}`}
+                              style={arrowBtnStyle}
+                              onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-100)'; e.currentTarget.style.color = 'var(--gray-700)'; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = 'var(--gray-500)'; }}
+                            >
+                              <ArrowLeft style={{ width: '14px', height: '14px' }} />
+                            </button>
+                          )}
+                          {colIndex < columnas.length - 1 && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleActualizarEstado(joven.id, ordenEstados[colIndex + 1]); }}
+                              title={`Mover a ${columnas[colIndex + 1].titulo}`}
+                              style={arrowBtnStyle}
+                              onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-100)'; e.currentTarget.style.color = 'var(--gray-700)'; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = 'var(--gray-500)'; }}
+                            >
+                              <ArrowRight style={{ width: '14px', height: '14px' }} />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     ))
                   )}
@@ -173,7 +191,6 @@ const KanbanJCF = () => {
           <ModalAprendiz
             aprendiz={jovenSeleccionado}
             onClose={cerrarModal}
-            onAsignarEncargado={handleAsignarEncargado}
             onActualizarEstado={handleActualizarEstado}
           />
         )}
