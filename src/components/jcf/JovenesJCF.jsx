@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Users, Plus, Search, Edit, Trash2, X, Briefcase, Link as LinkIcon,
-  Lock, Image as ImageIcon, UserCheck, LayoutDashboard, UsersRound, AlertTriangle
+  Image as ImageIcon, UserCheck, LayoutDashboard, UsersRound, AlertTriangle
 } from 'lucide-react';
 
 const ConfirmModal = ({ config, onClose }) => {
@@ -78,7 +78,7 @@ const SectionTitle = ({ icon: Icon, text }) => (
 );
 
 const ErrorMsg = ({ text }) => (
-  <p style={{ marginTop: '4px', fontSize: '12px', color: '#EF4444', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: "'DM Sans', sans-serif" }}>
+  <p style={{ marginTop: '4px', fontSize: '12px', color: '#EF4444', display: 'flex', alignItems: 'center', gap: '4px', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>
     <AlertTriangle style={{ width: '12px', height: '12px' }} /> {text}
   </p>
 );
@@ -95,7 +95,7 @@ const initialFormData = {
 const JovenesJCF = () => {
   const authStorage = JSON.parse(localStorage.getItem('auth-storage') || '{}');
   const currentUser = authStorage?.state?.user || {};
-  const isAdminOrLider = currentUser.rol === 'admin' || currentUser.rol === 'lider';
+  const isAdminOrLider = currentUser.rol === 'admin' || currentUser.rol === 'lider' || currentUser.rol === 'lider_jcf';
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -126,7 +126,7 @@ const JovenesJCF = () => {
   const cargarDatos = async () => {
     try {
       setLoading(true);
-      const resJovenes = await jcfService.obtenerJovenes();
+      const resJovenes = await jcfService.obtenerAprendices();
       const arrJovenes = Array.isArray(resJovenes) ? resJovenes : (resJovenes?.data && Array.isArray(resJovenes.data) ? resJovenes.data : []);
       setJovenes(arrJovenes);
       
@@ -159,7 +159,7 @@ const JovenesJCF = () => {
                       formData.credencialesJcf.trim() !== '' && 
                       formData.nombreNegocio.trim() !== '' && 
                       formData.linkImagenNegocio.trim() !== '' && 
-                      formData.encargadoId !== '';
+                      String(formData.encargadoId).trim() !== '';
 
   const handleOpenModal = (mode, joven = null) => {
     setModalMode(mode);
@@ -167,10 +167,10 @@ const JovenesJCF = () => {
     setFormErrors({});
     if (mode === 'edit' && joven) {
       setFormData({
-        nombreCompleto: joven.nombreCompleto || '',
-        linkPapeles: joven.linkPapeles || '',
-        credencialesJcf: joven.credencialesJcf || '',
-        nombreNegocio: joven.nombreNegocio || '',
+        nombreCompleto: joven.nombreCompleto || `${joven.nombre || ''} ${joven.apellido || ''}`.trim() || '',
+        linkPapeles: joven.linkPapeles || joven.linkDocumentos || '',
+        credencialesJcf: joven.credencialesJcf || joven.passwordPrograma || '',
+        nombreNegocio: joven.nombreNegocio || joven.linkNegocio || '',
         linkImagenNegocio: joven.linkImagenNegocio || '',
         encargadoId: joven.encargadoId || ''
       });
@@ -198,32 +198,42 @@ const JovenesJCF = () => {
     if (!validateForm()) return;
     try {
       setSubmitting(true);
+      const payload = {
+        nombreCompleto: formData.nombreCompleto,
+        linkPapeles: formData.linkPapeles,
+        credencialesJcf: formData.credencialesJcf,
+        nombreNegocio: formData.nombreNegocio,
+        linkImagenNegocio: formData.linkImagenNegocio,
+        encargadoId: parseInt(formData.encargadoId, 10)
+      };
       if (modalMode === 'create') {
-        await jcfService.crearJoven(formData);
+        await jcfService.crearAprendiz(payload);
         toast.success('Registro creado exitosamente');
       } else {
-        await jcfService.actualizarJoven(selectedJoven.id, formData);
+        await jcfService.actualizarAprendiz(selectedJoven.id, payload);
         toast.success('Registro actualizado exitosamente');
       }
       handleCloseModal();
       cargarDatos();
     } catch (error) {
-      toast.error('Error al guardar registro');
+      console.error('Error:', error);
+      toast.error(error.response?.data?.error || 'Error al guardar registro');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleEliminar = (joven) => {
+    const nombreMostrar = joven.nombreCompleto || `${joven.nombre || ''} ${joven.apellido || ''}`.trim() || 'Este registro';
     showConfirm({
       variant: 'danger',
       title: 'Eliminar registro',
       subtitle: 'Esta acción no se puede revertir',
-      message: `¿Confirmas que deseas eliminar a "${joven.nombreCompleto}"?`,
+      message: `¿Confirmas que deseas eliminar a "${nombreMostrar}"?`,
       confirmLabel: 'Sí, eliminar',
       onConfirm: async () => {
         try {
-          await jcfService.eliminarJoven(joven.id);
+          await jcfService.eliminarAprendiz(joven.id);
           toast.success('Registro eliminado exitosamente');
           cargarDatos();
         } catch (error) {
@@ -236,10 +246,12 @@ const JovenesJCF = () => {
   const safeJovenes = Array.isArray(jovenes) ? jovenes : [];
   const safeEncargados = Array.isArray(encargados) ? encargados : [];
 
-  const jovenesFiltrados = safeJovenes.filter(j =>
-    j.nombreCompleto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    j.nombreNegocio?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const jovenesFiltrados = safeJovenes.filter(j => {
+    const nombreCompleto = j.nombreCompleto || `${j.nombre || ''} ${j.apellido || ''}`.trim();
+    const negocio = j.nombreNegocio || j.linkNegocio || '';
+    return nombreCompleto.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           negocio.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   const inputBaseStyle = {
     width: '100%',
@@ -251,11 +263,13 @@ const JovenesJCF = () => {
     color: 'var(--gray-900)',
     background: '#fff',
     outline: 'none',
-    transition: 'all 200ms ease',
+    transition: 'all 200ms ease'
   };
 
-  const inputWithIconStyle = { ...inputBaseStyle, paddingLeft: '38px' };
-  const inputErrorStyle = { borderColor: '#EF4444', boxShadow: '0 0 0 2px rgba(239,68,68,0.15)' };
+  const inputErrorStyle = {
+    borderColor: '#EF4444',
+    background: '#FEF2F2'
+  };
 
   const labelStyle = {
     display: 'block',
@@ -263,188 +277,149 @@ const JovenesJCF = () => {
     fontWeight: 600,
     color: 'var(--gray-600)',
     marginBottom: '6px',
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: "'DM Sans', sans-serif"
   };
 
   const selectStyle = {
-    ...inputBaseStyle,
-    appearance: 'none',
+    width: '100%',
+    padding: '10px 12px',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-md)',
+    fontSize: '14px',
+    fontFamily: "'DM Sans', sans-serif",
+    color: 'var(--gray-900)',
+    background: '#fff',
+    outline: 'none',
     cursor: 'pointer',
+    transition: 'all 200ms ease'
   };
 
-  const navBtnStyle = (isActive) => ({
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '10px 16px',
-    background: isActive ? 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))' : '#fff',
-    color: isActive ? '#fff' : 'var(--gray-600)',
-    border: isActive ? 'none' : '1px solid var(--border)',
-    borderRadius: 'var(--radius-md)',
-    fontFamily: "'Plus Jakarta Sans', sans-serif",
-    fontSize: '13px',
-    fontWeight: 600,
-    cursor: 'pointer',
-    boxShadow: isActive ? '0 2px 8px rgba(31,78,158,0.28)' : 'none',
-    transition: 'all 200ms ease'
-  });
+  if (!isAdminOrLider) {
+    return (
+      <Layout>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', flexDirection: 'column', gap: '16px' }}>
+          <AlertTriangle style={{ width: '48px', height: '48px', color: '#F59E0B' }} />
+          <h2 style={{ fontSize: '20px', fontWeight: 800, fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--gray-900)' }}>Acceso Denegado</h2>
+          <p style={{ fontSize: '14px', fontFamily: "'DM Sans', sans-serif", color: 'var(--gray-500)' }}>No tienes permisos para acceder a esta sección</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes modalIn { from { opacity:0; transform:scale(0.96) translateY(8px); } to { opacity:1; transform:scale(1) translateY(0); } }
-      `}</style>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
-
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          {isAdminOrLider && (
-            <>
-              <button onClick={() => navigate('/jcf/lideres')} style={navBtnStyle(path.includes('lideres'))}>
-                <UsersRound style={{width: 16, height: 16}}/> Gestionar Líderes
-              </button>
-              <button onClick={() => navigate('/jcf/encargados')} style={navBtnStyle(path.includes('encargados'))}>
-                <UserCheck style={{width: 16, height: 16}}/> Gestionar Encargados
-              </button>
-              <button onClick={() => navigate('/jcf/jovenes')} style={navBtnStyle(path.includes('jovenes') || path.includes('distribucion'))}>
-                <Users style={{width: 16, height: 16}}/> Distribución de Jóvenes
-              </button>
-            </>
-          )}
-          <button onClick={() => navigate('/jcf/kanban')} style={navBtnStyle(path.includes('kanban'))}>
-            <LayoutDashboard style={{width: 16, height: 16}}/> Tablero Kanban
-          </button>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+      <div style={{ padding: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
           <div>
-            <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '26px', fontWeight: 800, color: 'var(--gray-900)', letterSpacing: '-0.02em', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Users style={{ width: '28px', height: '28px', color: 'var(--capyme-blue-mid)' }} />
+            <h1 style={{ fontSize: '28px', fontWeight: 800, fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--gray-900)', margin: 0 }}>
               Distribución de Jóvenes
             </h1>
-            <p style={{ fontSize: '14px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif" }}>
-              {jovenesFiltrados.length} joven{jovenesFiltrados.length !== 1 ? 'es' : ''} registrado{jovenesFiltrados.length !== 1 ? 's' : ''}
+            <p style={{ fontSize: '14px', color: 'var(--gray-500)', marginTop: '4px', fontFamily: "'DM Sans', sans-serif" }}>
+              Gestiona el registro y distribución de jóvenes en el programa JCF
             </p>
           </div>
           {isAdminOrLider && (
-            <button
-              onClick={() => handleOpenModal('create')}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '14px', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 8px rgba(31,78,158,0.28)', transition: 'all 200ms ease', whiteSpace: 'nowrap' }}
-              onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-            >
-              <Plus style={{ width: '16px', height: '16px' }} />
+            <button onClick={() => handleOpenModal('create')} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', fontSize: '14px', fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif", cursor: 'pointer', boxShadow: '0 2px 8px rgba(31,78,158,0.28)', transition: 'all 150ms ease' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+              <Plus style={{ width: '18px', height: '18px' }} />
               Registrar Joven JCF
             </button>
           )}
         </div>
 
-        <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'grid', gridTemplateColumns: '1fr', gap: '12px', alignItems: 'center' }}>
-            <div style={{ position: 'relative' }}>
-              <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: 'var(--gray-400)', pointerEvents: 'none' }} />
-              <input type="text" placeholder="Buscar por nombre del joven o negocio..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={inputWithIconStyle} onFocus={e => { e.target.style.borderColor = 'var(--capyme-blue-mid)'; e.target.style.boxShadow = '0 0 0 3px rgba(43,91,166,0.12)'; }} onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }} />
-            </div>
+        <div style={{ background: '#fff', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px 20px', borderBottom: '1px solid var(--border)', background: 'var(--gray-50)' }}>
+            <Search style={{ width: '18px', height: '18px', color: 'var(--gray-400)' }} />
+            <input type="text" placeholder="Buscar por nombre o negocio..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} style={{ flex: 1, border: 'none', background: 'transparent', fontSize: '14px', fontFamily: "'DM Sans', sans-serif", color: 'var(--gray-900)', outline: 'none' }} />
           </div>
 
-          <div style={{ overflowX: 'auto' }}>
-            {loading ? (
-              <div style={{ padding: '60px 24px', textAlign: 'center' }}>
+          {loading ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 20px' }}>
+              <div style={{ textAlign: 'center' }}>
                 <div style={{ width: '40px', height: '40px', border: '3px solid var(--border)', borderTopColor: 'var(--capyme-blue-mid)', borderRadius: '50%', animation: 'spin 700ms linear infinite', margin: '0 auto 16px' }} />
-                <p style={{ fontSize: '14px', color: 'var(--gray-400)', fontFamily: "'DM Sans', sans-serif" }}>Cargando información...</p>
+                <p style={{ fontSize: '14px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif" }}>Cargando registros...</p>
               </div>
-            ) : (
+            </div>
+          ) : jovenesFiltrados.length === 0 ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', flexDirection: 'column', gap: '16px' }}>
+              <Users style={{ width: '48px', height: '48px', color: 'var(--gray-300)' }} />
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontSize: '16px', fontWeight: 600, color: 'var(--gray-700)', fontFamily: "'Plus Jakarta Sans', sans-serif", margin: 0 }}>
+                  {searchTerm ? 'Sin resultados' : 'No hay registros'}
+                </p>
+                <p style={{ fontSize: '14px', color: 'var(--gray-500)', marginTop: '4px', fontFamily: "'DM Sans', sans-serif" }}>
+                  {searchTerm ? 'Intenta con otro término de búsqueda' : 'Crea tu primer registro para comenzar'}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ background: 'var(--gray-50)' }}>
-                    {['Joven JCF', 'Plataforma JCF', 'Negocio', 'Encargado', 'Acciones'].map((h, i) => (
-                      <th key={h} style={{ padding: '14px 24px', textAlign: i === 4 ? 'right' : 'left', fontSize: '11px', fontWeight: 700, color: 'var(--gray-500)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'Plus Jakarta Sans', sans-serif", borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>
-                        {h}
-                      </th>
-                    ))}
+                  <tr style={{ background: 'var(--gray-50)', borderBottom: '1px solid var(--border)' }}>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 700, color: 'var(--gray-600)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'DM Sans', sans-serif" }}>Nombre</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 700, color: 'var(--gray-600)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'DM Sans', sans-serif" }}>Negocio</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 700, color: 'var(--gray-600)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'DM Sans', sans-serif" }}>Encargado</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'center', fontSize: '12px', fontWeight: 700, color: 'var(--gray-600)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'DM Sans', sans-serif" }}>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {jovenesFiltrados.length > 0 ? (
-                    jovenesFiltrados.map((joven) => {
-                      const nombreEncargado = safeEncargados.find(e => e.id === joven.encargadoId)?.nombre || joven.encargadoNombre || 'No asignado';
-                      
-                      return (
-                        <tr
-                          key={joven.id}
-                          onMouseEnter={() => setHoveredRow(joven.id)}
-                          onMouseLeave={() => setHoveredRow(null)}
-                          style={{ borderBottom: '1px solid var(--border)', transition: 'background 150ms ease', background: hoveredRow === joven.id ? 'var(--gray-50)' : 'transparent' }}
-                        >
-                          <td style={{ padding: '14px 24px' }}>
-                            <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--gray-800)', fontFamily: "'DM Sans', sans-serif", marginBottom: '4px' }}>
-                              {joven.nombreCompleto}
-                            </p>
-                            <a href={joven.linkPapeles} target="_blank" rel="noopener noreferrer" style={{ fontSize: '12px', color: 'var(--capyme-blue-mid)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                              <LinkIcon style={{ width: '12px', height: '12px' }} /> Papeles del Joven
-                            </a>
-                          </td>
-                          <td style={{ padding: '14px 24px' }}>
-                            <div style={{ background: '#f3f4f6', padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
-                              <p style={{ fontSize: '12px', color: 'var(--gray-700)', fontFamily: "'DM Sans', sans-serif", whiteSpace: 'pre-wrap', margin: 0 }}>
-                                {joven.credencialesJcf}
-                              </p>
-                            </div>
-                          </td>
-                          <td style={{ padding: '14px 24px' }}>
-                            <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--gray-800)', fontFamily: "'DM Sans', sans-serif", marginBottom: '4px' }}>
-                              {joven.nombreNegocio}
-                            </p>
-                            <a href={joven.linkImagenNegocio} target="_blank" rel="noopener noreferrer" style={{ fontSize: '12px', color: 'var(--capyme-blue-mid)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                              <ImageIcon style={{ width: '12px', height: '12px' }} /> Imagen del Negocio
-                            </a>
-                          </td>
-                          <td style={{ padding: '14px 24px' }}>
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px', background: '#F0FDF4', color: '#16A34A', borderRadius: 'var(--radius-sm)', fontSize: '12px', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", border: '1px solid #BBF7D0' }}>
-                              <UserCheck style={{ width: '14px', height: '14px' }} />
-                              {nombreEncargado}
-                            </span>
-                          </td>
-                          <td style={{ padding: '14px 24px', textAlign: 'right' }}>
-                            {isAdminOrLider && (
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
-                                <button onClick={() => handleOpenModal('edit', joven)} title="Editar" style={{ width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', borderRadius: 'var(--radius-sm)', background: 'transparent', cursor: 'pointer', color: 'var(--gray-400)', transition: 'all 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.background = '#EEF4FF'; e.currentTarget.style.color = 'var(--capyme-blue-mid)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-400)'; }}>
+                  {jovenesFiltrados.map((joven, idx) => {
+                    const nombreCompleto = joven.nombreCompleto || `${joven.nombre || ''} ${joven.apellido || ''}`.trim();
+                    const negocio = joven.nombreNegocio || joven.linkNegocio || '-';
+                    const encargado = joven.encargado ? `${joven.encargado.nombre} ${joven.encargado.apellido}` : '-';
+                    return (
+                      <tr
+                        key={joven.id || idx}
+                        onMouseEnter={() => setHoveredRow(joven.id)}
+                        onMouseLeave={() => setHoveredRow(null)}
+                        style={{
+                          background: hoveredRow === joven.id ? 'var(--gray-50)' : '#fff',
+                          borderBottom: '1px solid var(--border)',
+                          transition: 'all 150ms ease'
+                        }}
+                      >
+                        <td style={{ padding: '14px 16px', fontSize: '14px', color: 'var(--gray-900)', fontFamily: "'DM Sans', sans-serif", fontWeight: 500 }}>
+                          {nombreCompleto}
+                        </td>
+                        <td style={{ padding: '14px 16px', fontSize: '14px', color: 'var(--gray-700)', fontFamily: "'DM Sans', sans-serif" }}>
+                          {negocio}
+                        </td>
+                        <td style={{ padding: '14px 16px', fontSize: '14px', color: 'var(--gray-700)', fontFamily: "'DM Sans', sans-serif" }}>
+                          {encargado}
+                        </td>
+                        <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                            {hoveredRow === joven.id && (
+                              <>
+                                <button onClick={() => handleOpenModal('edit', joven)} style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'var(--capyme-blue-mid)', borderRadius: 'var(--radius-sm)', color: '#fff', cursor: 'pointer', transition: 'all 150ms ease' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.8'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
                                   <Edit style={{ width: '16px', height: '16px' }} />
                                 </button>
-                                <button onClick={() => handleEliminar(joven)} title="Eliminar" style={{ width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', borderRadius: 'var(--radius-sm)', background: 'transparent', cursor: 'pointer', color: 'var(--gray-400)', transition: 'all 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.background = '#FEF2F2'; e.currentTarget.style.color = '#DC2626'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-400)'; }}>
+                                <button onClick={() => handleEliminar(joven)} style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: '#EF4444', borderRadius: 'var(--radius-sm)', color: '#fff', cursor: 'pointer', transition: 'all 150ms ease' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.8'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
                                   <Trash2 style={{ width: '16px', height: '16px' }} />
                                 </button>
-                              </div>
+                              </>
                             )}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td colSpan="5" style={{ padding: '60px 24px', textAlign: 'center' }}>
-                        <Users style={{ width: '40px', height: '40px', color: 'var(--gray-200)', margin: '0 auto 12px' }} />
-                        <p style={{ fontSize: '14px', color: 'var(--gray-400)', fontWeight: 500 }}>No se encontraron registros</p>
-                      </td>
-                    </tr>
-                  )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 
       {showModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '16px' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }} onClick={handleCloseModal}>
           <div style={{ background: '#fff', borderRadius: 'var(--radius-lg)', maxWidth: '600px', width: '100%', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', overflow: 'hidden', animation: 'modalIn 0.25s ease both' }} onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--border)', background: 'var(--gray-50)' }}>
               <div>
-                <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '18px', fontWeight: 800, color: 'var(--gray-900)', letterSpacing: '-0.01em' }}>
+                <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '18px', fontWeight: 800, color: 'var(--gray-900)', letterSpacing: '-0.01em', margin: 0 }}>
                   {modalMode === 'create' ? 'Registrar Joven JCF' : 'Editar Joven JCF'}
                 </h2>
-                <p style={{ fontSize: '13px', color: 'var(--gray-400)', marginTop: '2px', fontFamily: "'DM Sans', sans-serif" }}>
+                <p style={{ fontSize: '13px', color: 'var(--gray-400)', marginTop: '2px', fontFamily: "'DM Sans', sans-serif", margin: '4px 0 0 0' }}>
                   Complete los datos requeridos para la distribución.
                 </p>
               </div>
@@ -465,13 +440,13 @@ const JovenesJCF = () => {
 
                 <div>
                   <label style={labelStyle}>Link de Papeles del Joven *</label>
-                  <input type="url" value={formData.linkPapeles} onChange={(e) => handleChange('linkPapeles', e.target.value)} placeholder="https://drive.google.com/..." style={{ ...inputBaseStyle, ...(formErrors.linkPapeles ? inputErrorStyle : {}) }} onFocus={e => { if (!formErrors.linkPapeles) { e.target.style.borderColor = 'var(--capyme-blue-mid)'; e.target.style.boxShadow = '0 0 0 3px rgba(43,91,166,0.12)'; } }} onBlur={e => { if (!formErrors.linkPapeles) { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; } }} />
+                  <input type="url" value={formData.linkPapeles} onChange={(e) => handleChange('linkPapeles', e.target.value)} placeholder="www.drive.google.com..." style={{ ...inputBaseStyle, ...(formErrors.linkPapeles ? inputErrorStyle : {}) }} onFocus={e => { if (!formErrors.linkPapeles) { e.target.style.borderColor = 'var(--capyme-blue-mid)'; e.target.style.boxShadow = '0 0 0 3px rgba(43,91,166,0.12)'; } }} onBlur={e => { if (!formErrors.linkPapeles) { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; } }} />
                   {formErrors.linkPapeles && <ErrorMsg text={formErrors.linkPapeles} />}
                 </div>
 
                 <div>
                   <label style={labelStyle}>Usuario y Contraseña Plataforma JCF *</label>
-                  <textarea value={formData.credencialesJcf} onChange={(e) => handleChange('credencialesJcf', e.target.value)} placeholder="Usuario: ...&#10;Contraseña: ..." rows="3" style={{ ...inputBaseStyle, resize: 'vertical', ...(formErrors.credencialesJcf ? inputErrorStyle : {}) }} onFocus={e => { if (!formErrors.credencialesJcf) { e.target.style.borderColor = 'var(--capyme-blue-mid)'; e.target.style.boxShadow = '0 0 0 3px rgba(43,91,166,0.12)'; } }} onBlur={e => { if (!formErrors.credencialesJcf) { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; } }} />
+                  <textarea value={formData.credencialesJcf} onChange={(e) => handleChange('credencialesJcf', e.target.value)} placeholder="Usuario: ... Contraseña: ..." rows="3" style={{ ...inputBaseStyle, resize: 'vertical', ...(formErrors.credencialesJcf ? inputErrorStyle : {}) }} onFocus={e => { if (!formErrors.credencialesJcf) { e.target.style.borderColor = 'var(--capyme-blue-mid)'; e.target.style.boxShadow = '0 0 0 3px rgba(43,91,166,0.12)'; } }} onBlur={e => { if (!formErrors.credencialesJcf) { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; } }} />
                   {formErrors.credencialesJcf && <ErrorMsg text={formErrors.credencialesJcf} />}
                 </div>
 
@@ -487,7 +462,7 @@ const JovenesJCF = () => {
 
                 <div>
                   <label style={labelStyle}>Link de Imagen de la Información del Negocio *</label>
-                  <input type="url" value={formData.linkImagenNegocio} onChange={(e) => handleChange('linkImagenNegocio', e.target.value)} placeholder="https://..." style={{ ...inputBaseStyle, ...(formErrors.linkImagenNegocio ? inputErrorStyle : {}) }} onFocus={e => { if (!formErrors.linkImagenNegocio) { e.target.style.borderColor = 'var(--capyme-blue-mid)'; e.target.style.boxShadow = '0 0 0 3px rgba(43,91,166,0.12)'; } }} onBlur={e => { if (!formErrors.linkImagenNegocio) { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; } }} />
+                  <input type="url" value={formData.linkImagenNegocio} onChange={(e) => handleChange('linkImagenNegocio', e.target.value)} placeholder="www.drive.google.com..." style={{ ...inputBaseStyle, ...(formErrors.linkImagenNegocio ? inputErrorStyle : {}) }} onFocus={e => { if (!formErrors.linkImagenNegocio) { e.target.style.borderColor = 'var(--capyme-blue-mid)'; e.target.style.boxShadow = '0 0 0 3px rgba(43,91,166,0.12)'; } }} onBlur={e => { if (!formErrors.linkImagenNegocio) { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; } }} />
                   {formErrors.linkImagenNegocio && <ErrorMsg text={formErrors.linkImagenNegocio} />}
                 </div>
 
@@ -506,7 +481,7 @@ const JovenesJCF = () => {
                         <option value="">Seleccione un encargado de la lista...</option>
                         {safeEncargados.map((encargado) => (
                           <option key={encargado.id} value={encargado.id}>
-                            {encargado.nombre} {encargado.apellido} {encargado.rol ? `(${encargado.rol})` : ''}
+                            {encargado.nombre} {encargado.apellido}
                           </option>
                         ))}
                       </select>
