@@ -1,10 +1,16 @@
-import api from './axios';
+import api from './axios'
 
 export const jcfService = {
   getAll: async (params = {}) => (await api.get('/jcf', { params })).data,
   getById: async (id) => (await api.get(`/jcf/${id}`)).data,
-  create: async (data) => (await api.post('/jcf', data)).data,
-  update: async (id, data) => (await api.put(`/jcf/${id}`, data)).data,
+  create: async (data) => {
+    const payload = data instanceof FormData ? Object.fromEntries(data) : data
+    return (await api.post('/jcf', payload)).data
+  },
+  update: async (id, data) => {
+    const payload = data instanceof FormData ? Object.fromEntries(data) : data
+    return (await api.put(`/jcf/${id}`, payload)).data
+  },
   toggleActivo: async (id) => (await api.patch(`/jcf/${id}/toggle-activo`)).data,
   updateRecurso: async (id, data) => (await api.patch(`/jcf/${id}/recurso`, data)).data,
   getNegocios: async () => (await api.get('/negocios', { params: { activo: 'true' } })).data,
@@ -13,11 +19,26 @@ export const jcfService = {
   actualizarEstado: async (id, estadoKanban) => (await api.patch(`/jcf/aprendices/${id}/estado`, { estadoKanban })).data,
   asignarEncargado: async (id, encargadoId) => (await api.patch(`/jcf/aprendices/${id}/encargado`, { encargadoId })).data,
   obtenerLideres: async () => (await api.get('/jcf/lideres')).data,
-  crearNegocio: async (data) => (await api.post('/jcf/negocios', data)).data,
-  crearAprendiz: async (data) => (await api.post('/jcf/aprendices', data)).data,
-  actualizarAprendiz: async (id, data) => (await api.put(`/jcf/aprendices/${id}`, data)).data,
+  crearNegocio: async (data) => {
+    const payload = data instanceof FormData ? Object.fromEntries(data) : data
+    return (await api.post('/jcf/negocios', payload)).data
+  },
+  crearAprendiz: async (data) => {
+    const payload = data instanceof FormData ? Object.fromEntries(data) : data
+    return (await api.post('/jcf/aprendices', payload)).data
+  },
+  actualizarAprendiz: async (id, data) => {
+    const payload = data instanceof FormData ? Object.fromEntries(data) : data
+    return (await api.put(`/jcf/aprendices/${id}`, payload)).data
+  },
   eliminarAprendiz: async (id) => (await api.delete(`/jcf/aprendices/${id}`)).data,
   obtenerEncargados: async () => (await api.get('/encargados')).data,
-  crearJoven: async (jovenData) => (await api.post('/jcf/jovenes', jovenData)).data,
-  createAprendiz: async (aprendizData) => (await api.post('/jcf/aprendices', aprendizData)).data
-};
+  crearJoven: async (data) => {
+    const payload = data instanceof FormData ? Object.fromEntries(data) : data
+    return (await api.post('/jcf/jovenes', payload)).data
+  },
+  createAprendiz: async (data) => {
+    const payload = data instanceof FormData ? Object.fromEntries(data) : data
+    return (await api.post('/jcf/aprendices', payload)).data
+  }
+}
