@@ -17,5 +17,7 @@ export const jcfService = {
   crearAprendiz: async (data) => (await api.post('/jcf/aprendices', data)).data,
   actualizarAprendiz: async (id, data) => (await api.put(`/jcf/aprendices/${id}`, data)).data,
   eliminarAprendiz: async (id) => (await api.delete(`/jcf/aprendices/${id}`)).data,
-  obtenerEncargados: async () => (await api.get('/encargados')).data
+  obtenerEncargados: async () => (await api.get('/encargados')).data,
+  crearJoven: async (jovenData) => (await api.post('/jcf/jovenes', jovenData)).data,
+  createAprendiz: async (aprendizData) => (await api.post('/jcf/aprendices', aprendizData)).data
 };
