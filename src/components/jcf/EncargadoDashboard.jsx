@@ -1,334 +1,196 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import Layout from '../common/Layout';
-import { getEncargados, createEncargado, updateEncargado, deleteEncargado } from '../../services/encargadosService';
-import { Users, Plus, Edit2, Trash2, X, Save, Mail, ArrowLeft, UserCheck, LayoutDashboard, UsersRound } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../../store/authStore';
+import { jcfService } from '../../services/jcfService';
+import ModalAprendiz from './ModalAprendiz';
+import { LayoutDashboard, LogOut, Clock, RefreshCw, CheckCircle2, ArrowRight, ArrowLeft } from 'lucide-react';
 
-const GestionEncargados = () => {
+const EncargadoDashboard = () => {
+  const { user, logout } = useAuthStore();
   const navigate = useNavigate();
-  const location = useLocation();
-  const path = location.pathname;
-  
-  const [encargados, setEncargados] = useState([]);
+
+  const [jovenes, setJovenes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [hoveredRow, setHoveredRow] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editId, setEditId] = useState(null);
-  const [error, setError] = useState('');
-  const [formData, setFormData] = useState({
-    nombre: '', apellido: '', email: '', password: '', telefono: '', activo: true
-  });
+  const [error, setError] = useState(null);
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [jovenSeleccionado, setJovenSeleccionado] = useState(null);
 
   useEffect(() => {
-    fetchEncargados();
+    cargarJovenes();
   }, []);
 
-  const fetchEncargados = async () => {
+  const cargarJovenes = async () => {
     try {
       setLoading(true);
-      const data = await getEncargados();
-      setEncargados(Array.isArray(data) ? data : (data?.data && Array.isArray(data.data) ? data.data : []));
-    } catch (err) {
-      console.error(err);
-      setError('Error al cargar los encargados');
-      setEncargados([]);
+      setError(null);
+      const res = await jcfService.obtenerAprendices();
+      const dataArray = Array.isArray(res) ? res : (res?.data && Array.isArray(res.data) ? res.data : []);
+      const filtrados = dataArray.filter(j => j.encargadoId === user?.id);
+      setJovenes(filtrados);
+    } catch (error) {
+      setError('Error al cargar los jóvenes asignados');
+      setJovenes([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === 'checkbox' ? checked : value
-    });
+  const abrirModal = (joven) => {
+    setJovenSeleccionado(joven);
+    setModalAbierto(true);
   };
 
-  const openModal = (encargado = null) => {
-    setError('');
-    if (encargado) {
-      setEditId(encargado.id);
-      setFormData({
-        nombre: encargado.nombre || '', apellido: encargado.apellido || '',
-        email: encargado.email || '', password: '', telefono: encargado.telefono || '',
-        activo: encargado.activo
-      });
-    } else {
-      setEditId(null);
-      setFormData({ nombre: '', apellido: '', email: '', password: '', telefono: '', activo: true });
-    }
-    setModalOpen(true);
+  const cerrarModal = () => {
+    setJovenSeleccionado(null);
+    setModalAbierto(false);
   };
 
-  const closeModal = () => {
-    setModalOpen(false);
-    setEditId(null);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleActualizarEstado = async (id, estadoKanban) => {
     try {
-      if (editId) {
-        const updateData = { ...formData };
-        if (!updateData.password) delete updateData.password;
-        await updateEncargado(editId, updateData);
-      } else {
-        await createEncargado(formData);
-      }
-      fetchEncargados();
-      closeModal();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Error al guardar el encargado');
+      await jcfService.actualizarEstado(id, estadoKanban);
+      cargarJovenes();
+    } catch (error) {
+      setError('Error al actualizar el estado del joven');
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar este encargado?')) {
-      try {
-        await deleteEncargado(id);
-        fetchEncargados();
-      } catch (err) {
-        console.error(err);
-        alert('Error al eliminar el encargado');
-      }
-    }
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
   };
 
-  const safeEncargados = Array.isArray(encargados) ? encargados : [];
+  const safeJovenes = Array.isArray(jovenes) ? jovenes : [];
+  const nombreCompleto = (j) => j.nombreCompleto || `${j.nombre || ''} ${j.apellido || ''}`.trim();
 
-  const navBtnStyle = (isActive) => ({
-    display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px',
-    background: isActive ? 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))' : '#fff',
-    color: isActive ? '#fff' : 'var(--gray-600)', border: isActive ? 'none' : '1px solid var(--border)',
-    borderRadius: 'var(--radius-md)', fontFamily: "'Plus Jakarta Sans', sans-serif",
-    fontSize: '13px', fontWeight: 600, cursor: 'pointer',
-    boxShadow: isActive ? '0 2px 8px rgba(31,78,158,0.28)' : 'none', transition: 'all 200ms ease'
-  });
+  const columnas = [
+    { key: 'ENCARGADO', titulo: 'Jóvenes Encargados', color: '#F59E0B', icon: Clock },
+    { key: 'EN_PROCESO', titulo: 'Joven en Proceso', color: '#3B82F6', icon: RefreshCw },
+    { key: 'POSTULADO', titulo: 'Joven Postulado', color: '#10B981', icon: CheckCircle2 }
+  ];
 
-  const btnStyle = {
-    display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', 
-    background: 'linear-gradient(135deg, var(--capyme-blue-mid), var(--capyme-blue))', 
-    color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', 
-    fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '14px', fontWeight: 600, 
-    cursor: 'pointer', boxShadow: '0 2px 8px rgba(31,78,158,0.28)', transition: 'all 200ms ease'
+  const ordenEstados = columnas.map(c => c.key);
+
+  const arrowBtnStyle = {
+    width: '26px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    border: '1px solid var(--border)', borderRadius: '6px', background: '#fff', cursor: 'pointer',
+    color: 'var(--gray-500)', transition: 'all 150ms ease'
   };
-
-  const inputStyle = {
-    width: '100%', padding: '10px 12px', border: '1px solid var(--border)', 
-    borderRadius: 'var(--radius-md)', fontSize: '14px', fontFamily: "'DM Sans', sans-serif", 
-    color: 'var(--gray-900)', background: '#fff', outline: 'none', boxSizing: 'border-box'
-  };
-
-  if (loading) {
-    return (
-      <Layout>
-        <div style={{ padding: '24px', textAlign: 'center', fontFamily: "'DM Sans', sans-serif" }}>Cargando encargados...</div>
-      </Layout>
-    );
-  }
 
   return (
-    <Layout>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
-        
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          <button onClick={() => navigate('/jcf/lideres')} style={navBtnStyle(false)}>
-            <UsersRound style={{width: 16, height: 16}}/> Gestionar Líderes
-          </button>
-          <button onClick={() => navigate('/jcf/encargados')} style={navBtnStyle(true)}>
-            <UserCheck style={{width: 16, height: 16}}/> Gestionar Encargados
-          </button>
-          <button onClick={() => navigate('/jcf/jovenes')} style={navBtnStyle(false)}>
-            <Users style={{width: 16, height: 16}}/> Distribución de Jóvenes
-          </button>
-          <button onClick={() => navigate('/jcf/kanban')} style={navBtnStyle(false)}>
-            <LayoutDashboard style={{width: 16, height: 16}}/> Tablero Kanban
-          </button>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+    <div style={{ padding: '20px', minHeight: '100vh', backgroundColor: '#f3f4f6', fontFamily: "'DM Sans', sans-serif" }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', background: '#fff', padding: '16px 24px', borderRadius: 'var(--radius-lg)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <LayoutDashboard style={{ width: '28px', height: '28px', color: 'var(--capyme-blue-mid)' }} />
           <div>
-            <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '26px', fontWeight: 800, color: 'var(--gray-900)', letterSpacing: '-0.02em', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <UserCheck style={{ width: '28px', height: '28px', color: 'var(--capyme-blue-mid)' }} />
-              Gestión de Encargados JCF
+            <h1 style={{ margin: 0, fontSize: '20px', color: 'var(--gray-900)', fontWeight: 800, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+              Jóvenes Construyendo el Futuro
             </h1>
-            <p style={{ fontSize: '14px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>
-              Administra los usuarios encargados registrados en el sistema
+            <p style={{ margin: '2px 0 0 0', fontSize: '13px', color: 'var(--gray-500)' }}>
+              Panel de Encargado
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button 
-              onClick={() => navigate('/jcf')}
-              style={{ ...btnStyle, background: '#fff', color: 'var(--gray-700)', border: '1px solid var(--border)', boxShadow: 'none' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-50)'}
-              onMouseLeave={e => e.currentTarget.style.background = '#fff'}
-            >
-              <ArrowLeft style={{ width: '16px', height: '16px' }} /> Volver al Menú
-            </button>
-            <button 
-              onClick={() => openModal()}
-              style={btnStyle}
-              onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-            >
-              <Plus style={{ width: '16px', height: '16px' }} /> Nuevo Encargado
-            </button>
-          </div>
+        </div>
+        <button onClick={handleLogout} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', borderRadius: 'var(--radius-md)', fontWeight: 700, cursor: 'pointer', transition: 'all 150ms ease', fontFamily: "'Plus Jakarta Sans', sans-serif" }} onMouseEnter={e => e.currentTarget.style.background = '#FEE2E2'} onMouseLeave={e => e.currentTarget.style.background = '#FEF2F2'}>
+          <LogOut style={{ width: '18px', height: '18px' }} /> Cerrar Sesión
+        </button>
+      </div>
+
+      <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '24px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '24px', fontWeight: 800, color: 'var(--gray-900)', margin: 0 }}>
+            Mi Tablero de Jóvenes
+          </h2>
+          <p style={{ fontSize: '14px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif", margin: '6px 0 0 0' }}>
+            Jóvenes que te asignaron a ti para postular
+          </p>
         </div>
 
-        <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ background: 'var(--gray-50)' }}>
-                  {['Nombre Completo', 'Correo', 'Teléfono', 'Estado', 'Acciones'].map((h, i) => (
-                    <th key={h} style={{ padding: '14px 24px', textAlign: i === 4 ? 'center' : 'left', fontSize: '11px', fontWeight: 700, color: 'var(--gray-500)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'Plus Jakarta Sans', sans-serif", borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap', margin: 0 }}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {safeEncargados.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" style={{ padding: '24px', textAlign: 'center', color: 'var(--gray-500)', fontSize: '14px', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>
-                      No hay encargados registrados.
-                    </td>
-                  </tr>
-                ) : (
-                  safeEncargados.map((encargado) => (
-                    <tr 
-                      key={encargado.id}
-                      onMouseEnter={() => setHoveredRow(encargado.id)}
-                      onMouseLeave={() => setHoveredRow(null)}
-                      style={{ borderBottom: '1px solid var(--border)', transition: 'background 150ms ease', background: hoveredRow === encargado.id ? 'var(--gray-50)' : 'transparent' }}
-                    >
-                      <td style={{ padding: '14px 24px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <div style={{ width: '38px', height: '38px', borderRadius: 'var(--radius-md)', background: 'linear-gradient(135deg, #10B981, #059669)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '13px', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", flexShrink: 0 }}>
-                            {encargado.nombre?.charAt(0)?.toUpperCase()}{encargado.apellido?.charAt(0)?.toUpperCase()}
+        {error && (
+          <div style={{ padding: '16px', background: '#FEE2E2', border: '1px solid #FECACA', borderRadius: 'var(--radius-md)', marginBottom: '20px', color: '#DC2626', fontSize: '14px', fontWeight: 500 }}>
+            {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div style={{ padding: '60px 24px', textAlign: 'center' }}>
+            <div style={{ width: '40px', height: '40px', border: '3px solid var(--border)', borderTopColor: 'var(--capyme-blue-mid)', borderRadius: '50%', animation: 'spin 700ms linear infinite', margin: '0 auto 16px' }} />
+            <p style={{ fontSize: '14px', color: 'var(--gray-400)', fontFamily: "'DM Sans', sans-serif", fontWeight: 500 }}>Cargando información...</p>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', alignItems: 'start' }}>
+            {columnas.map((columna, colIndex) => {
+              const jovenesColumna = safeJovenes.filter(j => (j.estadoKanban || 'ENCARGADO') === columna.key);
+              const ColIcon = columna.icon;
+              return (
+                <div key={columna.key} style={{ background: 'var(--gray-50)', padding: '16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+                  <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--gray-800)', fontFamily: "'Plus Jakarta Sans', sans-serif", margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: columna.color }}></span> {columna.titulo}
+                    <span style={{ marginLeft: 'auto', fontSize: '13px', fontWeight: 800, color: 'var(--gray-500)', background: '#fff', padding: '2px 8px', borderRadius: '12px', border: '1px solid var(--border)' }}>{jovenesColumna.length}</span>
+                  </h3>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {jovenesColumna.length === 0 ? (
+                      <div style={{ padding: '30px 0', textAlign: 'center', background: '#fff', borderRadius: '8px', border: '1px dashed var(--border)' }}>
+                        <p style={{ fontSize: '13px', color: 'var(--gray-400)', margin: 0, fontWeight: 500 }}>Sin registros</p>
+                      </div>
+                    ) : (
+                      jovenesColumna.map(joven => (
+                        <div key={joven.id} onClick={() => abrirModal(joven)} style={{ background: '#fff', padding: '16px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.03)', border: '1px solid var(--border)', cursor: 'pointer', transition: 'all 150ms ease' }} onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--capyme-blue-mid)'} onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}>
+                          <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: 'var(--gray-900)', fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <ColIcon style={{ width: '16px', height: '16px', color: columna.color }} />
+                            {nombreCompleto(joven) || 'Sin nombre'}
+                          </h4>
+                          {joven.nombreNegocio && (
+                            <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: 'var(--gray-500)', fontWeight: 500 }}>
+                              {joven.nombreNegocio}
+                            </p>
+                          )}
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                            {colIndex > 0 && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleActualizarEstado(joven.id, ordenEstados[colIndex - 1]); }}
+                                title={`Regresar a ${columnas[colIndex - 1].titulo}`}
+                                style={arrowBtnStyle}
+                                onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-100)'; e.currentTarget.style.color = 'var(--gray-800)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = 'var(--gray-500)'; }}
+                              >
+                                <ArrowLeft style={{ width: '14px', height: '14px' }} />
+                              </button>
+                            )}
+                            {colIndex < columnas.length - 1 && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleActualizarEstado(joven.id, ordenEstados[colIndex + 1]); }}
+                                title={`Mover a ${columnas[colIndex + 1].titulo}`}
+                                style={arrowBtnStyle}
+                                onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-100)'; e.currentTarget.style.color = 'var(--gray-800)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = 'var(--gray-500)'; }}
+                              >
+                                <ArrowRight style={{ width: '14px', height: '14px' }} />
+                              </button>
+                            )}
                           </div>
-                          <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--gray-800)', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>
-                            {encargado.nombre} {encargado.apellido}
-                          </p>
                         </div>
-                      </td>
-                      <td style={{ padding: '14px 24px' }}>
-                        <p style={{ fontSize: '13px', color: 'var(--gray-700)', display: 'flex', alignItems: 'center', gap: '5px', margin: 0 }}>
-                          <Mail style={{ width: '12px', height: '12px', color: 'var(--gray-400)' }} />
-                          {encargado.email}
-                        </p>
-                      </td>
-                      <td style={{ padding: '14px 24px', fontSize: '13px', color: 'var(--gray-700)', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>
-                        {encargado.telefono || 'N/A'}
-                      </td>
-                      <td style={{ padding: '14px 24px' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', borderRadius: 'var(--radius-sm)', fontSize: '12px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", background: encargado.activo ? '#ECFDF5' : '#FEF2F2', color: encargado.activo ? '#065F46' : '#991B1B' }}>
-                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: encargado.activo ? '#10B981' : '#EF4444', display: 'inline-block' }} />
-                          {encargado.activo ? 'Activo' : 'Inactivo'}
-                        </span>
-                      </td>
-                      <td style={{ padding: '14px 24px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
-                          <button 
-                            onClick={() => openModal(encargado)}
-                            style={{ padding: '6px', background: '#EEF4FF', border: '1px solid #D1E0FF', borderRadius: 'var(--radius-sm)', color: 'var(--capyme-blue-mid)', cursor: 'pointer', transition: 'all 150ms ease' }}
-                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--capyme-blue-mid)'; e.currentTarget.style.color = '#fff'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = '#EEF4FF'; e.currentTarget.style.color = 'var(--capyme-blue-mid)'; }}
-                          >
-                            <Edit2 style={{ width: '16px', height: '16px' }} />
-                          </button>
-                          <button 
-                            onClick={() => handleDelete(encargado.id)}
-                            style={{ padding: '6px', background: '#FEF2F2', border: '1px solid #FEE2E2', borderRadius: 'var(--radius-sm)', color: '#EF4444', cursor: 'pointer', transition: 'all 150ms ease' }}
-                            onMouseEnter={e => { e.currentTarget.style.background = '#EF4444'; e.currentTarget.style.color = '#fff'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = '#FEF2F2'; e.currentTarget.style.color = '#EF4444'; }}
-                          >
-                            <Trash2 style={{ width: '16px', height: '16px' }} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {modalOpen && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-            <div style={{ background: '#fff', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: '500px', boxShadow: '0 20px 60px rgba(0,0,0,0.18)', overflow: 'hidden' }}>
-              <div style={{ padding: '20px 24px', background: 'var(--gray-50)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--gray-900)' }}>
-                  {editId ? 'Editar Encargado' : 'Nuevo Encargado'}
-                </h2>
-                <button onClick={closeModal} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-400)' }}>
-                  <X style={{ width: '20px', height: '20px' }} />
-                </button>
-              </div>
-              
-              <form onSubmit={handleSubmit} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {error && (
-                  <div style={{ padding: '12px', background: '#FEF2F2', color: '#991B1B', borderRadius: 'var(--radius-md)', fontSize: '13px', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>
-                    {error}
-                  </div>
-                )}
-                
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>Nombre</label>
-                    <input type="text" name="nombre" value={formData.nombre} onChange={handleInputChange} required style={inputStyle} />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>Apellido</label>
-                    <input type="text" name="apellido" value={formData.apellido} onChange={handleInputChange} required style={inputStyle} />
+                      ))
+                    )}
                   </div>
                 </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>Correo Electrónico</label>
-                  <input type="email" name="email" value={formData.email} onChange={handleInputChange} required style={inputStyle} />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>
-                    Contraseña {editId && <span style={{ color: 'var(--gray-400)', fontWeight: 400 }}>(Dejar en blanco para mantener actual)</span>}
-                  </label>
-                  <input type="password" name="password" value={formData.password} onChange={handleInputChange} required={!editId} style={inputStyle} />
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--gray-700)', marginBottom: '6px', fontFamily: "'DM Sans', sans-serif", margin: 0 }}>Teléfono</label>
-                  <input type="tel" name="telefono" value={formData.telefono} onChange={handleInputChange} style={inputStyle} />
-                </div>
-
-                {editId && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
-                    <input type="checkbox" id="activo" name="activo" checked={formData.activo} onChange={handleInputChange} style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
-                    <label htmlFor="activo" style={{ fontSize: '14px', color: 'var(--gray-700)', fontFamily: "'DM Sans', sans-serif", cursor: 'pointer', margin: 0 }}>
-                      Usuario Activo
-                    </label>
-                  </div>
-                )}
-
-                <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                  <button type="button" onClick={closeModal} style={{ padding: '10px 20px', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', background: '#fff', color: 'var(--gray-700)', fontSize: '14px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", cursor: 'pointer' }}>
-                    Cancelar
-                  </button>
-                  <button type="submit" style={{ ...btnStyle, margin: 0 }}>
-                    <Save style={{ width: '16px', height: '16px' }} />
-                    {editId ? 'Actualizar' : 'Crear Encargado'}
-                  </button>
-                </div>
-              </form>
-            </div>
+              );
+            })}
           </div>
         )}
       </div>
-    </Layout>
+
+      {modalAbierto && (
+        <ModalAprendiz
+          aprendiz={jovenSeleccionado}
+          onClose={cerrarModal}
+          onActualizarEstado={handleActualizarEstado}
+        />
+      )}
+    </div>
   );
 };
 
-export default GestionEncargados;
+export default EncargadoDashboard;

@@ -43,6 +43,7 @@ import GestionEncargados from './components/jcf/GestionEncargados';
 import KanbanJCF from './components/jcf/KanbanJCF';
 import JovenesJCF from './components/jcf/JovenesJCF';
 import JovenesDistribucion from './components/jcf/JovenesDistribucion';
+import EncargadoDashboard from './components/jcf/EncargadoDashboard';
 
 function App() {
   return (
@@ -85,7 +86,8 @@ function App() {
         <Route path="/jcf/lideres" element={<ProtectedRoute allowedRoles={['admin', 'lider_jcf']}><AdminLiderDashboard /></ProtectedRoute>} />
         <Route path="/jcf/jovenes" element={<ProtectedRoute allowedRoles={['admin', 'lider_jcf']}><JovenesDistribucion /></ProtectedRoute>} />
         <Route path="/jcf/encargados" element={<ProtectedRoute allowedRoles={['admin', 'lider_jcf']}><GestionEncargados /></ProtectedRoute>} />
-       <Route path="/jcf/kanban" element={<ProtectedRoute allowedRoles={['admin', 'lider_jcf', 'encargado_jcf']}><KanbanJCF /></ProtectedRoute>} />
+        <Route path="/jcf/kanban" element={<ProtectedRoute allowedRoles={['admin', 'lider_jcf', 'encargado_jcf']}><KanbanJCF /></ProtectedRoute>} />
+        <Route path="/jcf/encargado" element={<ProtectedRoute allowedRoles={['admin', 'encargado_jcf']}><EncargadoDashboard /></ProtectedRoute>} />
 
         <Route path="/cliente/dashboard" element={<ProtectedRoute allowedRoles={['cliente']}><ClienteDashboard /></ProtectedRoute>} />
         <Route path="/cliente/mis-negocios" element={<ProtectedRoute allowedRoles={['cliente']}><MisNegocios /></ProtectedRoute>} />

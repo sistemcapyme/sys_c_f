@@ -8,33 +8,33 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-  
+
   const { login: setAuth, logout: clearAuth, user, isAuthenticated } = useAuthStore();
 
   const login = async (email, password) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await authService.login(email, password);
-      
+
       if (response.success && response.data?.token && response.data?.usuario) {
         setAuth(response.data.usuario, response.data.token);
 
         await new Promise(resolve => setTimeout(resolve, 100));
-        
+
         const rol = response.data.usuario.rol;
-        
+
         if (rol === 'admin' || rol === 'colaborador') {
           navigate('/dashboard', { replace: true });
         } else if (rol === 'lider_jcf') {
           navigate('/jcf', { replace: true });
         } else if (rol === 'encargado_jcf') {
-          navigate('/kanban', { replace: true });
+          navigate('/jcf/encargado', { replace: true });
         } else {
           navigate('/cliente/dashboard', { replace: true });
         }
-        
+
         toast.success('¡Bienvenido!');
         return true;
       } else {
@@ -54,14 +54,14 @@ export const useAuth = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await authService.register(userData);
-      
+
       if (response.success && response.data?.token && response.data?.usuario) {
         setAuth(response.data.usuario, response.data.token);
 
         await new Promise(resolve => setTimeout(resolve, 100));
-        
+
         toast.success('¡Registro exitoso!');
         navigate('/cliente/dashboard', { replace: true });
         return true;
