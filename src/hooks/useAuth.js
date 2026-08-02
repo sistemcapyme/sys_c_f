@@ -28,7 +28,7 @@ export const useAuth = () => {
         if (rol === 'admin' || rol === 'colaborador') {
           navigate('/dashboard', { replace: true });
         } else if (rol === 'lider_jcf') {
-          navigate('/jcf', { replace: true });
+          navigate('/jcf/lideres', { replace: true });
         } else if (rol === 'encargado_jcf') {
           navigate('/jcf/encargado', { replace: true });
         } else {
