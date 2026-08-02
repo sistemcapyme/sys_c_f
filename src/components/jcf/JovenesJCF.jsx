@@ -8,6 +8,8 @@ import {
   Image as ImageIcon, UserCheck, LayoutDashboard, UsersRound, AlertTriangle
 } from 'lucide-react';
 
+const ROLES_ENCARGABLES = ['admin', 'lider_jcf', 'encargado_jcf'];
+
 const ConfirmModal = ({ config, onClose }) => {
   if (!config?.show) return null;
   const isDanger  = config.variant === 'danger';
@@ -96,7 +98,7 @@ const JovenesJCF = () => {
   const authStorage = JSON.parse(localStorage.getItem('auth-storage') || '{}');
   const currentUser = authStorage?.state?.user || {};
   const isAdminOrLider = currentUser.rol === 'admin' || currentUser.rol === 'lider' || currentUser.rol === 'lider_jcf';
-  
+
   const navigate = useNavigate();
   const location = useLocation();
   const path = location.pathname;
@@ -106,11 +108,11 @@ const JovenesJCF = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState('create');
   const [selectedJoven, setSelectedJoven] = useState(null);
-  
+
   const [formData, setFormData] = useState(initialFormData);
   const [formErrors, setFormErrors] = useState({});
   const [hoveredRow, setHoveredRow] = useState(null);
@@ -129,10 +131,10 @@ const JovenesJCF = () => {
       const resJovenes = await jcfService.obtenerAprendices();
       const arrJovenes = Array.isArray(resJovenes) ? resJovenes : (resJovenes?.data && Array.isArray(resJovenes.data) ? resJovenes.data : []);
       setJovenes(arrJovenes);
-      
+
       const resEncargados = await jcfService.obtenerEncargados();
       const arrEncargados = Array.isArray(resEncargados) ? resEncargados : (resEncargados?.data && Array.isArray(resEncargados.data) ? resEncargados.data : []);
-      setEncargados(arrEncargados);
+      setEncargados(arrEncargados.filter(u => ROLES_ENCARGABLES.includes(u.rol)));
     } catch (error) {
       toast.error('Error al cargar datos');
       setJovenes([]);
@@ -154,11 +156,11 @@ const JovenesJCF = () => {
     return Object.keys(errors).length === 0;
   };
 
-  const isFormValid = formData.nombreCompleto.trim() !== '' && 
-                      formData.linkPapeles.trim() !== '' && 
-                      formData.credencialesJcf.trim() !== '' && 
-                      formData.nombreNegocio.trim() !== '' && 
-                      formData.linkImagenNegocio.trim() !== '' && 
+  const isFormValid = formData.nombreCompleto.trim() !== '' &&
+                      formData.linkPapeles.trim() !== '' &&
+                      formData.credencialesJcf.trim() !== '' &&
+                      formData.nombreNegocio.trim() !== '' &&
+                      formData.linkImagenNegocio.trim() !== '' &&
                       String(formData.encargadoId).trim() !== '';
 
   const handleOpenModal = (mode, joven = null) => {
@@ -431,7 +433,7 @@ const JovenesJCF = () => {
             <form onSubmit={handleSubmit} style={{ overflowY: 'auto', flex: 1, padding: '24px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <SectionTitle icon={Users} text="Información del Joven" />
-                
+
                 <div>
                   <label style={labelStyle}>Nombre Completo *</label>
                   <input type="text" value={formData.nombreCompleto} onChange={(e) => handleChange('nombreCompleto', e.target.value)} placeholder="Ej. Juan Pérez" style={{ ...inputBaseStyle, ...(formErrors.nombreCompleto ? inputErrorStyle : {}) }} onFocus={e => { if (!formErrors.nombreCompleto) { e.target.style.borderColor = 'var(--capyme-blue-mid)'; e.target.style.boxShadow = '0 0 0 3px rgba(43,91,166,0.12)'; } }} onBlur={e => { if (!formErrors.nombreCompleto) { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; } }} />
@@ -473,7 +475,7 @@ const JovenesJCF = () => {
                       Asignación de Encargado
                     </span>
                   </div>
-                  
+
                   <div>
                     <label style={{ ...labelStyle, color: '#15803D' }}>Encargarlo a: *</label>
                     <div style={{ position: 'relative' }}>
