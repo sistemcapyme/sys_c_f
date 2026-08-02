@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../common/Layout';
 import { jcfService } from '../../services/jcfService';
 import { useNavigate } from 'react-router-dom';
-import { Users, UserCheck, LayoutDashboard, UsersRound, Search, Filter } from 'lucide-react';
+import { Users, UserCheck, LayoutDashboard, UsersRound, Search, Filter, Pencil } from 'lucide-react';
 
 const JovenesDistribucion = () => {
   const navigate = useNavigate();
@@ -12,6 +12,7 @@ const JovenesDistribucion = () => {
   const [busqueda, setBusqueda] = useState('');
   const [encargadoSeleccionado, setEncargadoSeleccionado] = useState(null);
   const [encargados, setEncargados] = useState([]);
+  const [editandoId, setEditandoId] = useState(null);
 
   useEffect(() => {
     cargarDatos();
@@ -40,7 +41,8 @@ const JovenesDistribucion = () => {
   const handleAsignarEncargado = async (jovenId, encargadoId) => {
     try {
       await jcfService.asignarEncargado(jovenId, encargadoId);
-      cargarDatos();
+      await cargarDatos();
+      setEditandoId(null);
     } catch (error) {
       console.error('Error asignando encargado:', error);
     }
@@ -165,18 +167,29 @@ const JovenesDistribucion = () => {
                           {joven.encargado ? `${joven.encargado.nombre} ${joven.encargado.apellido}` : 'Sin asignar'}
                         </td>
                         <td style={{ padding: '12px' }}>
-                          <select
-                            value={joven.encargadoId || ''}
-                            onChange={e => handleAsignarEncargado(joven.id, e.target.value || null)}
-                            style={{ padding: '8px', fontSize: '13px', border: '1px solid var(--border)', borderRadius: '6px', background: '#fff', color: 'var(--gray-900)', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}
-                          >
-                            <option value="">Asignar encargado</option>
-                            {encargados.map(enc => (
-                              <option key={enc.id} value={enc.id}>
-                                {enc.nombre} {enc.apellido}
-                              </option>
-                            ))}
-                          </select>
+                          {editandoId === joven.id ? (
+                            <select
+                              autoFocus
+                              value={joven.encargadoId || ''}
+                              onChange={e => handleAsignarEncargado(joven.id, e.target.value || null)}
+                              onBlur={() => setEditandoId(null)}
+                              style={{ padding: '8px', fontSize: '13px', border: '1px solid var(--border)', borderRadius: '6px', background: '#fff', color: 'var(--gray-900)', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}
+                            >
+                              <option value="">Asignar encargado</option>
+                              {encargados.map(enc => (
+                                <option key={enc.id} value={enc.id}>
+                                  {enc.nombre} {enc.apellido}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <button
+                              onClick={() => setEditandoId(joven.id)}
+                              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', fontSize: '13px', fontWeight: 600, border: '1px solid var(--border)', borderRadius: '6px', background: '#fff', color: 'var(--gray-600)', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif" }}
+                            >
+                              <Pencil style={{ width: 14, height: 14 }} /> Editar
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))
