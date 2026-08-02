@@ -17,7 +17,7 @@ export const jcfService = {
   getClientes: async () => (await api.get('/usuarios', { params: { rol: 'cliente', activo: 'true' } })).data,
   
   obtenerAprendices: async () => (await api.get('/jcf/aprendices')).data,
-  obtenerAprendicesPorEncargado: async () => (await api.get('/jcf/aprendices')).data,
+  obtenerTodosAprendices: async () => (await api.get('/jcf/aprendices/todos')).data,
   actualizarEstado: async (id, estadoKanban) => (await api.patch(`/jcf/aprendices/${id}/estado`, { estadoKanban })).data,
   asignarEncargado: async (id, encargadoId) => (await api.patch(`/jcf/aprendices/${id}/encargado`, { encargadoId })).data,
   
