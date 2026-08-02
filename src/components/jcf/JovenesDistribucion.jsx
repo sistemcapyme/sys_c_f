@@ -150,7 +150,7 @@ const JovenesDistribucion = () => {
       const jovenesArray = Array.isArray(resJovenes) ? resJovenes : (resJovenes?.data && Array.isArray(resJovenes.data) ? resJovenes.data : []);
       setJovenes(jovenesArray);
 
-      const resEncargados = await jcfService.obtenerEncargados();
+      const resEncargados = await jcfService.obtenerEncargadosValidos();
       const encargadosArray = Array.isArray(resEncargados) ? resEncargados : (resEncargados?.data && Array.isArray(resEncargados.data) ? resEncargados.data : []);
       setEncargados(encargadosArray.filter(u => ROLES_ENCARGABLES.includes(u.rol)));
     } catch (error) {

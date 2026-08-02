@@ -132,9 +132,9 @@ const JovenesJCF = () => {
       const arrJovenes = Array.isArray(resJovenes) ? resJovenes : (resJovenes?.data && Array.isArray(resJovenes.data) ? resJovenes.data : []);
       setJovenes(arrJovenes);
 
-      const resEncargados = await jcfService.obtenerEncargados();
+      const resEncargados = await jcfService.obtenerEncargadosValidos();
       const arrEncargados = Array.isArray(resEncargados) ? resEncargados : (resEncargados?.data && Array.isArray(resEncargados.data) ? resEncargados.data : []);
-      setEncargados(arrEncargados.filter(u => ROLES_ENCARGABLES.includes(u.rol)));
+      setEncargados(arrEncargados);
     } catch (error) {
       toast.error('Error al cargar datos');
       setJovenes([]);
