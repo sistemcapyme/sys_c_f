@@ -18,20 +18,30 @@ export const useAuth = () => {
       
       const response = await authService.login(email, password);
       
-      if (response.success) {
+      if (response.success && response.data?.token && response.data?.usuario) {
         setAuth(response.data.usuario, response.data.token);
-        toast.success('¡Bienvenido!');
+
+        await new Promise(resolve => setTimeout(resolve, 100));
         
-        if (response.data.usuario.rol === 'admin' || response.data.usuario.rol === 'colaborador') {
-          navigate('/dashboard');
+        const rol = response.data.usuario.rol;
+        
+        if (rol === 'admin' || rol === 'colaborador') {
+          navigate('/dashboard', { replace: true });
+        } else if (rol === 'lider_jcf') {
+          navigate('/jcf', { replace: true });
+        } else if (rol === 'encargado_jcf') {
+          navigate('/kanban', { replace: true });
         } else {
-          navigate('/cliente/dashboard');
+          navigate('/cliente/dashboard', { replace: true });
         }
         
+        toast.success('¡Bienvenido!');
         return true;
+      } else {
+        throw new Error('Respuesta inválida del servidor');
       }
     } catch (err) {
-      const errorMsg = err.response?.data?.message || 'Error al iniciar sesión';
+      const errorMsg = err.response?.data?.message || err.message || 'Error al iniciar sesión';
       setError(errorMsg);
       toast.error(errorMsg);
       return false;
@@ -47,14 +57,19 @@ export const useAuth = () => {
       
       const response = await authService.register(userData);
       
-      if (response.success) {
+      if (response.success && response.data?.token && response.data?.usuario) {
         setAuth(response.data.usuario, response.data.token);
+
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         toast.success('¡Registro exitoso!');
-        navigate('/cliente/dashboard');
+        navigate('/cliente/dashboard', { replace: true });
         return true;
+      } else {
+        throw new Error('Respuesta inválida del servidor');
       }
     } catch (err) {
-      const errorMsg = err.response?.data?.message || 'Error al registrarse';
+      const errorMsg = err.response?.data?.message || err.message || 'Error al registrarse';
       setError(errorMsg);
       toast.error(errorMsg);
       return false;
@@ -65,8 +80,9 @@ export const useAuth = () => {
 
   const logout = () => {
     clearAuth();
+    localStorage.clear();
     toast.success('Sesión cerrada');
-    navigate('/login');
+    navigate('/login', { replace: true });
   };
 
   return {

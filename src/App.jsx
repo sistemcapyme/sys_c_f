@@ -32,7 +32,6 @@ import ClienteContacto from './pages/cliente/Contacto';
 
 import PagoExitoso from './pages/PagoExitoso';
 import PagoFallido from './pages/PagoFallido';
-
 import PagoExitosoCatalogo from './pages/PagoExitosoCatalogo';
 import PagoFallidoCatalogo from './pages/PagoFallidoCatalogo';
 
@@ -42,7 +41,7 @@ import CatalogosAdmin from './pages/admin/CatalogosAdmin';
 import AdminLiderDashboard from './components/jcf/AdminLiderDashboard';
 import GestionEncargados from './components/jcf/GestionEncargados';
 import KanbanJCF from './components/jcf/KanbanJCF';
-import JovenesJCF from './components/jcf/JovenesJCF'; 
+import JovenesJCF from './components/jcf/JovenesJCF';
 
 function App() {
   return (
@@ -64,48 +63,46 @@ function App() {
         <Route path="/catalogos" element={<CatalogosPublicos />} />
         <Route path="/catalogo/pago-exitoso" element={<PagoExitosoCatalogo />} />
         <Route path="/catalogo/pago-fallido" element={<PagoFallidoCatalogo />} />
-
-        <Route path="/pago-exitoso"   element={<PagoExitoso />} />
-        <Route path="/pago-fallido"   element={<PagoFallido />} />
+        <Route path="/pago-exitoso" element={<PagoExitoso />} />
+        <Route path="/pago-fallido" element={<PagoFallido />} />
         <Route path="/pago-pendiente" element={<PagoFallido />} />
 
-        <Route path="/dashboard"      element={<ProtectedRoute allowedRoles={['admin','colaborador']}><Dashboard /></ProtectedRoute>} />
-        <Route path="/negocios"       element={<ProtectedRoute allowedRoles={['admin','colaborador']}><Negocios /></ProtectedRoute>} />
-        <Route path="/programas"      element={<ProtectedRoute allowedRoles={['admin','colaborador']}><Programas /></ProtectedRoute>} />
-        <Route path="/cursos"         element={<ProtectedRoute allowedRoles={['admin','colaborador']}><Cursos /></ProtectedRoute>} />
-        <Route path="/postulaciones"  element={<ProtectedRoute allowedRoles={['admin','colaborador']}><Postulaciones /></ProtectedRoute>} />
-        <Route path="/usuarios"       element={<ProtectedRoute allowedRoles={['admin','colaborador']}><Usuarios /></ProtectedRoute>} />
-        <Route path="/avisos"         element={<ProtectedRoute allowedRoles={['admin','colaborador']}><Avisos /></ProtectedRoute>} />
-        <Route path="/avisos/:id"     element={<ProtectedRoute allowedRoles={['admin','colaborador']}><AvisoDetalle /></ProtectedRoute>} />
-        <Route path="/enlaces"        element={<ProtectedRoute allowedRoles={['admin','colaborador']}><Enlaces /></ProtectedRoute>} />
-        <Route path="/contacto"       element={<ProtectedRoute allowedRoles={['admin','colaborador']}><Contacto /></ProtectedRoute>} />
-        
-        <Route path="/jcf"            element={<ProtectedRoute allowedRoles={['admin','colaborador','lider','lider_jcf','encargado','encargado_jcf']}><JovenesConstruyendoFuturo /></ProtectedRoute>} />
-        <Route path="/jcf/lideres"    element={<ProtectedRoute allowedRoles={['admin','lider','lider_jcf']}><AdminLiderDashboard /></ProtectedRoute>} />
-        <Route path="/jcf/jovenes"    element={<ProtectedRoute allowedRoles={['admin','lider','lider_jcf']}><JovenesJCF /></ProtectedRoute>} />
-        <Route path="/jcf/encargados" element={<ProtectedRoute allowedRoles={['admin','lider','lider_jcf']}><GestionEncargados /></ProtectedRoute>} />
-        <Route path="/jcf/kanban"     element={<ProtectedRoute allowedRoles={['admin','lider','lider_jcf','encargado','encargado_jcf']}><KanbanJCF /></ProtectedRoute>} />
-        
-        <Route path="/campanas"       element={<ProtectedRoute allowedRoles={['admin']}><CampanasAdmin /></ProtectedRoute>} />
+        <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin', 'colaborador']}><Dashboard /></ProtectedRoute>} />
+        <Route path="/negocios" element={<ProtectedRoute allowedRoles={['admin', 'colaborador']}><Negocios /></ProtectedRoute>} />
+        <Route path="/programas" element={<ProtectedRoute allowedRoles={['admin', 'colaborador']}><Programas /></ProtectedRoute>} />
+        <Route path="/cursos" element={<ProtectedRoute allowedRoles={['admin', 'colaborador']}><Cursos /></ProtectedRoute>} />
+        <Route path="/postulaciones" element={<ProtectedRoute allowedRoles={['admin', 'colaborador']}><Postulaciones /></ProtectedRoute>} />
+        <Route path="/usuarios" element={<ProtectedRoute allowedRoles={['admin', 'colaborador']}><Usuarios /></ProtectedRoute>} />
+        <Route path="/avisos" element={<ProtectedRoute allowedRoles={['admin', 'colaborador']}><Avisos /></ProtectedRoute>} />
+        <Route path="/avisos/:id" element={<ProtectedRoute allowedRoles={['admin', 'colaborador']}><AvisoDetalle /></ProtectedRoute>} />
+        <Route path="/enlaces" element={<ProtectedRoute allowedRoles={['admin', 'colaborador']}><Enlaces /></ProtectedRoute>} />
+        <Route path="/contacto" element={<ProtectedRoute allowedRoles={['admin', 'colaborador']}><Contacto /></ProtectedRoute>} />
+        <Route path="/campanas" element={<ProtectedRoute allowedRoles={['admin']}><CampanasAdmin /></ProtectedRoute>} />
         <Route path="/admin/catalogos" element={<ProtectedRoute allowedRoles={['admin']}><CatalogosAdmin /></ProtectedRoute>} />
 
-        <Route path="/cliente/dashboard"      element={<ProtectedRoute allowedRoles={['cliente']}><ClienteDashboard /></ProtectedRoute>} />
-        <Route path="/cliente/mis-negocios"   element={<ProtectedRoute allowedRoles={['cliente']}><MisNegocios /></ProtectedRoute>} />
-        <Route path="/cliente/programas"      element={<ProtectedRoute allowedRoles={['cliente']}><ProgramasDisponibles /></ProtectedRoute>} />
-        <Route path="/cliente/postulaciones"  element={<ProtectedRoute allowedRoles={['cliente']}><MisPostulaciones /></ProtectedRoute>} />
-        <Route path="/cliente/cursos"         element={<ProtectedRoute allowedRoles={['cliente']}><CursosDisponibles /></ProtectedRoute>} />
-        <Route path="/cliente/avisos"         element={<ProtectedRoute allowedRoles={['cliente']}><ClienteAvisos /></ProtectedRoute>} />
-        <Route path="/cliente/avisos/:id"     element={<ProtectedRoute allowedRoles={['cliente']}><AvisoDetalle /></ProtectedRoute>} />
-        <Route path="/cliente/recursos"       element={<ProtectedRoute allowedRoles={['cliente']}><ClienteRecursos /></ProtectedRoute>} />
-        <Route path="/cliente/contacto"       element={<ProtectedRoute allowedRoles={['cliente']}><ClienteContacto /></ProtectedRoute>} />
+        <Route path="/jcf" element={<ProtectedRoute allowedRoles={['admin', 'colaborador', 'lider_jcf', 'encargado_jcf']}><JovenesConstruyendoFuturo /></ProtectedRoute>} />
+        <Route path="/jcf/lideres" element={<ProtectedRoute allowedRoles={['admin', 'lider_jcf']}><AdminLiderDashboard /></ProtectedRoute>} />
+        <Route path="/jcf/jovenes" element={<ProtectedRoute allowedRoles={['admin', 'lider_jcf']}><JovenesJCF /></ProtectedRoute>} />
+        <Route path="/jcf/encargados" element={<ProtectedRoute allowedRoles={['admin', 'lider_jcf']}><GestionEncargados /></ProtectedRoute>} />
+        <Route path="/jcf/kanban" element={<ProtectedRoute allowedRoles={['admin', 'lider_jcf', 'encargado_jcf']}><KanbanJCF /></ProtectedRoute>} />
 
-        <Route path="/perfil"          element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
-        <Route path="/inversiones"     element={<ProtectedRoute><Inversiones /></ProtectedRoute>} />
-        <Route path="/mis-campanas"    element={<ProtectedRoute><MisCampanas /></ProtectedRoute>} />
+        <Route path="/cliente/dashboard" element={<ProtectedRoute allowedRoles={['cliente']}><ClienteDashboard /></ProtectedRoute>} />
+        <Route path="/cliente/mis-negocios" element={<ProtectedRoute allowedRoles={['cliente']}><MisNegocios /></ProtectedRoute>} />
+        <Route path="/cliente/programas" element={<ProtectedRoute allowedRoles={['cliente']}><ProgramasDisponibles /></ProtectedRoute>} />
+        <Route path="/cliente/postulaciones" element={<ProtectedRoute allowedRoles={['cliente']}><MisPostulaciones /></ProtectedRoute>} />
+        <Route path="/cliente/cursos" element={<ProtectedRoute allowedRoles={['cliente']}><CursosDisponibles /></ProtectedRoute>} />
+        <Route path="/cliente/avisos" element={<ProtectedRoute allowedRoles={['cliente']}><ClienteAvisos /></ProtectedRoute>} />
+        <Route path="/cliente/avisos/:id" element={<ProtectedRoute allowedRoles={['cliente']}><AvisoDetalle /></ProtectedRoute>} />
+        <Route path="/cliente/recursos" element={<ProtectedRoute allowedRoles={['cliente']}><ClienteRecursos /></ProtectedRoute>} />
+        <Route path="/cliente/contacto" element={<ProtectedRoute allowedRoles={['cliente']}><ClienteContacto /></ProtectedRoute>} />
+
+        <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
+        <Route path="/inversiones" element={<ProtectedRoute><Inversiones /></ProtectedRoute>} />
+        <Route path="/mis-campanas" element={<ProtectedRoute><MisCampanas /></ProtectedRoute>} />
         <Route path="/mis-inversiones" element={<ProtectedRoute><MisInversiones /></ProtectedRoute>} />
 
-        <Route path="/"  element={<Navigate to="/login" replace />} />
-        <Route path="*"  element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
   );

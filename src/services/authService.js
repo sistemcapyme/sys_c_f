@@ -19,5 +19,13 @@ export const authService = {
   updatePerfil: async (userData) => {
     const response = await api.put('/usuarios/perfil', userData);
     return response.data;
+  },
+
+  logout: async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch {
+    }
+    return { success: true };
   }
 };

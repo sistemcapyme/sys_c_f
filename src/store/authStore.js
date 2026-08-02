@@ -19,13 +19,16 @@ export const useAuthStore = create(
       },
 
       login: (userData, token) => {
-        set({
-          user: userData,
-          token: token,
-          isAuthenticated: true,
-          inactivoModal: false,
-          inactivoContacto: null,
-        });
+        if (userData && token) {
+          set({
+            user: userData,
+            token: token,
+            isAuthenticated: true,
+            inactivoModal: false,
+            inactivoContacto: null,
+          });
+          localStorage.setItem('token', token);
+        }
       },
 
       logout: () => {
@@ -37,6 +40,7 @@ export const useAuthStore = create(
           inactivoContacto: null,
         });
         localStorage.removeItem('token');
+        localStorage.removeItem('auth-storage');
       },
 
       updateUser: (userData) => {
@@ -47,6 +51,8 @@ export const useAuthStore = create(
       isAdmin: () => get().user?.rol === 'admin',
       isColaborador: () => get().user?.rol === 'colaborador',
       isCliente: () => get().user?.rol === 'cliente',
+      isLiderJcf: () => get().user?.rol === 'lider_jcf',
+      isEncargadoJcf: () => get().user?.rol === 'encargado_jcf',
       hasRole: (roles) => roles.includes(get().user?.rol),
     }),
     {
