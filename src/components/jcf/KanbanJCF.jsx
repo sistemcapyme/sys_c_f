@@ -32,9 +32,9 @@ const KanbanJCF = () => {
       setError(null);
       const res = await jcfService.obtenerAprendices();
       const dataArray = Array.isArray(res) ? res : (res?.data && Array.isArray(res.data) ? res.data : []);
-      setJovenes(dataArray);
+      const filtrados = dataArray.filter(j => j.encargadoId === user?.id);
+      setJovenes(filtrados);
     } catch (error) {
-      console.error('Error cargando jóvenes:', error);
       setError('Error al cargar los jóvenes');
       setJovenes([]);
     } finally {
@@ -57,7 +57,7 @@ const KanbanJCF = () => {
       await jcfService.actualizarEstado(id, estadoKanban);
       cargarJovenes();
     } catch (error) {
-      console.error('Error actualizando estado:', error);
+      setError('Error al actualizar estado');
     }
   };
 
@@ -158,9 +158,9 @@ const KanbanJCF = () => {
                           <ColIcon style={{ width: '14px', height: '14px', color: columna.color }} />
                           {nombreCompleto(joven) || 'Sin nombre'}
                         </h4>
-                        {joven.linkNegocio && (
+                        {joven.nombreNegocio && (
                           <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: 'var(--gray-600)', fontFamily: "'DM Sans', sans-serif" }}>
-                            {joven.linkNegocio}
+                            {joven.nombreNegocio}
                           </p>
                         )}
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>

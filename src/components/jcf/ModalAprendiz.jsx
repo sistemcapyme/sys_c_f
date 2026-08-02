@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Briefcase, User, MapPin, ExternalLink, ArrowRight, ArrowLeft } from 'lucide-react';
+import { X, Briefcase, User, ExternalLink, ArrowRight, ArrowLeft } from 'lucide-react';
 
 const SectionTitle = ({ icon: Icon, text }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '4px' }}>
@@ -19,7 +19,7 @@ const InfoRow = ({ label, value, icon: Icon, isLink }) => (
     </span>
     {isLink && value ? (
       <a href={value} target="_blank" rel="noopener noreferrer" style={{ fontSize: '14px', color: 'var(--capyme-blue-mid)', fontFamily: "'DM Sans', sans-serif", fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}>
-        Ver documento <ExternalLink style={{ width: '12px', height: '12px' }} />
+        Ver enlace <ExternalLink style={{ width: '12px', height: '12px' }} />
       </a>
     ) : (
       <span style={{ fontSize: '14px', color: value ? 'var(--gray-900)' : 'var(--gray-400)', fontFamily: "'DM Sans', sans-serif", fontWeight: 500 }}>
@@ -80,19 +80,16 @@ const ModalAprendiz = ({ aprendiz, onClose, onActualizarEstado }) => {
                 <SectionTitle icon={User} text="Datos del Aprendiz" />
                 <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--gray-50)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
                   <InfoRow label="Nombre Completo" value={nombreCompleto} />
-                  <InfoRow label="CURP" value={aprendiz.curp} />
-                  <InfoRow label="Correo" value={aprendiz.correo} />
-                  <InfoRow label="Teléfono" value={aprendiz.telefono} />
-                  <InfoRow label="Documentos (Drive)" value={aprendiz.linkDocumentos || aprendiz.urlRecurso} isLink={true} />
+                  <InfoRow label="Usuario y Contraseña JCF" value={aprendiz.credencialesJcf} />
+                  <InfoRow label="Documentos (Drive)" value={aprendiz.linkPapeles} isLink={true} />
                 </div>
               </div>
 
               <div>
                 <SectionTitle icon={Briefcase} text="Datos del Negocio" />
                 <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--gray-50)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
-                  <InfoRow label="Razón Social / Nombre" value={aprendiz.negocio?.nombreNegocio || aprendiz.linkNegocio} />
-                  <InfoRow label="Ubicación" value={aprendiz.negocio ? `${aprendiz.negocio.ciudad}, ${aprendiz.negocio.estado}` : ''} icon={MapPin} />
-                  <InfoRow label="Dirección Exacta" value={aprendiz.negocio?.direccion} icon={MapPin} />
+                  <InfoRow label="Nombre del Negocio" value={aprendiz.nombreNegocio} />
+                  <InfoRow label="Link de Información" value={aprendiz.linkImagenNegocio} isLink={true} />
                 </div>
               </div>
 
