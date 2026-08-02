@@ -3,14 +3,14 @@ import Layout from '../common/Layout';
 import ModalAprendiz from './ModalAprendiz';
 import { jcfService } from '../../services/jcfService';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuthStore } from '../../store/authStore';
 import { Users, UserCheck, LayoutDashboard, UsersRound, LogOut, Clock, RefreshCw, CheckCircle2, ArrowRight, ArrowLeft } from 'lucide-react';
 
 const KanbanJCF = () => {
-  const authStorage = JSON.parse(localStorage.getItem('auth-storage') || '{}');
-  const currentUser = authStorage?.state?.user || {};
-  const rolUsuario = currentUser?.rol?.toLowerCase();
-  const isEncargado = rolUsuario === 'encargado' || rolUsuario === 'encargado_jcf';
-  const isAdminOrLider = rolUsuario === 'admin' || rolUsuario === 'lider' || rolUsuario === 'lider_jcf';
+  const { user, logout } = useAuthStore();
+  const rolUsuario = user?.rol?.toLowerCase();
+  const isEncargado = rolUsuario === 'encargado_jcf';
+  const isAdminOrLider = rolUsuario === 'admin' || rolUsuario === 'lider_jcf';
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -18,6 +18,7 @@ const KanbanJCF = () => {
 
   const [jovenes, setJovenes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [jovenSeleccionado, setJovenSeleccionado] = useState(null);
 
@@ -28,11 +29,13 @@ const KanbanJCF = () => {
   const cargarJovenes = async () => {
     try {
       setLoading(true);
+      setError(null);
       const res = await jcfService.obtenerAprendices();
       const dataArray = Array.isArray(res) ? res : (res?.data && Array.isArray(res.data) ? res.data : []);
       setJovenes(dataArray);
     } catch (error) {
-      console.error(error);
+      console.error('Error cargando jóvenes:', error);
+      setError('Error al cargar los jóvenes');
       setJovenes([]);
     } finally {
       setLoading(false);
@@ -54,13 +57,13 @@ const KanbanJCF = () => {
       await jcfService.actualizarEstado(id, estadoKanban);
       cargarJovenes();
     } catch (error) {
-      console.error(error);
+      console.error('Error actualizando estado:', error);
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('auth-storage');
-    window.location.href = '/login';
+    logout();
+    navigate('/login', { replace: true });
   };
 
   const safeJovenes = Array.isArray(jovenes) ? jovenes : [];
@@ -95,16 +98,16 @@ const KanbanJCF = () => {
 
       {isAdminOrLider && (
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          <button onClick={() => navigate('/jcf/lideres')} style={navBtnStyle(path === '/jcf' || path.includes('lideres'))}>
+          <button onClick={() => navigate('/jcf/lideres')} style={navBtnStyle(path === '/jcf/lideres')}>
             <UsersRound style={{width: 16, height: 16}}/> Gestionar Líderes
           </button>
-          <button onClick={() => navigate('/jcf/encargados')} style={navBtnStyle(path.includes('encargados'))}>
+          <button onClick={() => navigate('/jcf/encargados')} style={navBtnStyle(path === '/jcf/encargados')}>
             <UserCheck style={{width: 16, height: 16}}/> Gestionar Encargados
           </button>
-          <button onClick={() => navigate('/jcf/jovenes')} style={navBtnStyle(path.includes('jovenes') || path.includes('distribucion'))}>
+          <button onClick={() => navigate('/jcf/jovenes')} style={navBtnStyle(path === '/jcf/jovenes')}>
             <Users style={{width: 16, height: 16}}/> Distribución de Jóvenes
           </button>
-          <button onClick={() => navigate('/jcf/kanban')} style={navBtnStyle(path.includes('kanban'))}>
+          <button onClick={() => navigate('/jcf/kanban')} style={navBtnStyle(path === '/jcf/kanban')}>
             <LayoutDashboard style={{width: 16, height: 16}}/> Tablero Kanban
           </button>
         </div>
@@ -121,6 +124,12 @@ const KanbanJCF = () => {
             </p>
           </div>
         </div>
+
+        {error && (
+          <div style={{ padding: '16px', background: '#FEE2E2', border: '1px solid #FECACA', borderRadius: 'var(--radius-md)', marginBottom: '16px', color: '#DC2626', fontSize: '14px' }}>
+            {error}
+          </div>
+        )}
 
         {loading ? (
           <div style={{ padding: '60px 24px', textAlign: 'center' }}>
