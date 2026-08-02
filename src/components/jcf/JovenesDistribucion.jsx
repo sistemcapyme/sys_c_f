@@ -4,19 +4,20 @@ import { useNavigate } from 'react-router-dom';
 import { jcfService } from '../../services/jcfService';
 import {
   Users, UserCheck, LayoutDashboard, UsersRound, Plus, Search, Edit, Trash2, X,
-  ChevronDown, AlertCircle, CheckCircle, Eye, Shield, User, AlertTriangle, Briefcase, Link2
+  ChevronDown, AlertCircle, CheckCircle, Eye, Shield, User, AlertTriangle, Briefcase, Link2, Lock
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const ROLES_ENCARGABLES = ['admin', 'lider_jcf', 'encargado_jcf'];
 
 const initialFormData = {
-  nombre: '',
-  apellido: '',
+  nombreCompleto: '',
+  credencialesJcf: '',
+  linkPapeles: '',
   nombreNegocio: '',
-  linkNegocio: '',
-  estadoKanban: 'ENCARGADO',
-  encargadoId: ''
+  linkImagenNegocio: '',
+  encargadoId: '',
+  estadoKanban: 'ENCARGADO'
 };
 
 const ConfirmModal = ({ config, onClose }) => {
@@ -162,13 +163,22 @@ const JovenesDistribucion = () => {
 
   const validateForm = () => {
     const errors = {};
-    if (!formData.nombre.trim()) errors.nombre = 'El nombre es requerido';
-    if (!formData.apellido.trim()) errors.apellido = 'El apellido es requerido';
+    if (!formData.nombreCompleto.trim()) errors.nombreCompleto = 'El nombre completo es requerido';
+    if (!formData.credencialesJcf.trim()) errors.credencialesJcf = 'El usuario y contraseña son requeridos';
+    if (!formData.linkPapeles.trim()) errors.linkPapeles = 'El link de documentos es requerido';
+    if (!formData.nombreNegocio.trim()) errors.nombreNegocio = 'El nombre del negocio es requerido';
+    if (!formData.linkImagenNegocio.trim()) errors.linkImagenNegocio = 'El link de información del negocio es requerido';
+    if (!formData.encargadoId) errors.encargadoId = 'Debe seleccionar un encargado';
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  const isFormValid = formData.nombre.trim() !== '' && formData.apellido.trim() !== '';
+  const isFormValid = formData.nombreCompleto.trim() !== '' &&
+    formData.credencialesJcf.trim() !== '' &&
+    formData.linkPapeles.trim() !== '' &&
+    formData.nombreNegocio.trim() !== '' &&
+    formData.linkImagenNegocio.trim() !== '' &&
+    formData.encargadoId !== '';
 
   const handleOpenModal = (mode, joven = null) => {
     setModalMode(mode);
@@ -176,12 +186,13 @@ const JovenesDistribucion = () => {
     setFormErrors({});
     if (mode === 'edit' && joven) {
       setFormData({
-        nombre: joven.nombre || '',
-        apellido: joven.apellido || '',
+        nombreCompleto: joven.nombreCompleto || `${joven.nombre || ''} ${joven.apellido || ''}`.trim(),
+        credencialesJcf: joven.credencialesJcf || '',
+        linkPapeles: joven.linkPapeles || '',
         nombreNegocio: joven.nombreNegocio || '',
-        linkNegocio: joven.linkNegocio || '',
-        estadoKanban: joven.estadoKanban || 'ENCARGADO',
-        encargadoId: joven.encargadoId || ''
+        linkImagenNegocio: joven.linkImagenNegocio || '',
+        encargadoId: joven.encargadoId || '',
+        estadoKanban: joven.estadoKanban || 'ENCARGADO'
       });
     } else {
       setFormData({ ...initialFormData });
@@ -211,26 +222,20 @@ const JovenesDistribucion = () => {
     try {
       setSubmitting(true);
       const dataToSend = {
-        nombre: formData.nombre,
-        apellido: formData.apellido,
+        nombreCompleto: formData.nombreCompleto,
+        credencialesJcf: formData.credencialesJcf,
+        linkPapeles: formData.linkPapeles,
         nombreNegocio: formData.nombreNegocio,
-        linkNegocio: formData.linkNegocio,
-        estadoKanban: formData.estadoKanban
+        linkImagenNegocio: formData.linkImagenNegocio,
+        encargadoId: formData.encargadoId
       };
 
-      let jovenId = selectedJoven?.id;
-
       if (modalMode === 'create') {
-        const creado = await jcfService.crearJoven(dataToSend);
-        jovenId = creado?.data?.id || creado?.id;
+        await jcfService.crearAprendiz(dataToSend);
         toast.success('Joven creado exitosamente');
       } else {
-        await jcfService.actualizarJoven(jovenId, dataToSend);
+        await jcfService.actualizarAprendiz(selectedJoven.id, { ...dataToSend, estadoKanban: formData.estadoKanban });
         toast.success('Joven actualizado exitosamente');
-      }
-
-      if (jovenId) {
-        await jcfService.asignarEncargado(jovenId, formData.encargadoId || null);
       }
 
       handleCloseModal();
@@ -247,11 +252,11 @@ const JovenesDistribucion = () => {
       variant: 'danger',
       title: 'Eliminar joven',
       subtitle: 'Esta acción no se puede deshacer',
-      message: `¿Confirmas que deseas eliminar a "${joven.nombre} ${joven.apellido}"?`,
+      message: `¿Confirmas que deseas eliminar a "${joven.nombreCompleto || `${joven.nombre} ${joven.apellido}`}"?`,
       confirmLabel: 'Sí, eliminar',
       onConfirm: async () => {
         try {
-          await jcfService.eliminarJoven(joven.id);
+          await jcfService.eliminarAprendiz(joven.id);
           toast.success('Joven eliminado exitosamente');
           cargarDatos();
         } catch (error) {
@@ -285,10 +290,10 @@ const JovenesDistribucion = () => {
   };
 
   const jovenesFiltrados = jovenes.filter(j => {
-    const nombre = `${j.nombre || ''} ${j.apellido || ''}`.toLowerCase();
-    const negocio = (j.nombreNegocio || j.linkNegocio || '').toLowerCase();
+    const nombreCompleto = (j.nombreCompleto || `${j.nombre || ''} ${j.apellido || ''}`).toLowerCase();
+    const negocio = (j.nombreNegocio || '').toLowerCase();
     const query = searchTerm.toLowerCase();
-    const coincideBusqueda = nombre.includes(query) || negocio.includes(query);
+    const coincideBusqueda = nombreCompleto.includes(query) || negocio.includes(query);
     const coincideEstado = filterEstado ? j.estadoKanban === filterEstado : true;
     return coincideBusqueda && coincideEstado;
   });
@@ -434,13 +439,13 @@ const JovenesDistribucion = () => {
                             {joven.nombre?.charAt(0)?.toUpperCase()}{joven.apellido?.charAt(0)?.toUpperCase()}
                           </div>
                           <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--gray-800)', fontFamily: "'DM Sans', sans-serif" }}>
-                            {joven.nombre} {joven.apellido}
+                            {joven.nombreCompleto || `${joven.nombre} ${joven.apellido}`}
                           </p>
                         </div>
                       </td>
                       <td style={{ padding: '14px 24px' }}>
                         <p style={{ fontSize: '13px', color: 'var(--gray-700)' }}>
-                          {joven.nombreNegocio || joven.linkNegocio || '—'}
+                          {joven.nombreNegocio || '—'}
                         </p>
                       </td>
                       <td style={{ padding: '14px 24px' }}>
@@ -504,7 +509,7 @@ const JovenesDistribucion = () => {
                   {modalMode === 'create' ? 'Nuevo Joven' : 'Editar Joven'}
                 </h2>
                 <p style={{ fontSize: '13px', color: 'var(--gray-400)', marginTop: '2px', fontFamily: "'DM Sans', sans-serif" }}>
-                  {modalMode === 'create' ? 'Registra un nuevo joven en el sistema' : `Editando: ${selectedJoven?.nombre} ${selectedJoven?.apellido}`}
+                  {modalMode === 'create' ? 'Registra un nuevo joven en el sistema' : `Editando: ${selectedJoven?.nombreCompleto || `${selectedJoven?.nombre} ${selectedJoven?.apellido}`}`}
                 </p>
               </div>
               <button onClick={handleCloseModal} style={{ width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', borderRadius: 'var(--radius-sm)', background: 'transparent', cursor: 'pointer', color: 'var(--gray-400)', transition: 'all 150ms ease' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-100)'; e.currentTarget.style.color = 'var(--gray-600)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-400)'; }}>
@@ -515,56 +520,67 @@ const JovenesDistribucion = () => {
             <form onSubmit={handleSubmit} style={{ overflowY: 'auto', flex: 1, padding: '24px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
-                <SectionTitle icon={User} text="Información Personal" />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div>
-                    <label style={labelStyle}>Nombre *</label>
-                    <div style={{ position: 'relative' }}>
-                      <User style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: 'var(--gray-400)', pointerEvents: 'none' }} />
-                      <input type="text" value={formData.nombre} onChange={(e) => handleChange('nombre', e.target.value)} placeholder="Nombre" style={{ ...inputWithIconStyle, ...(formErrors.nombre ? inputErrorStyle : {}) }} />
-                    </div>
-                    {formErrors.nombre && <ErrorMsg text={formErrors.nombre} />}
+                <SectionTitle icon={User} text="Información del Joven" />
+                <div>
+                  <label style={labelStyle}>Nombre completo (con apellidos) *</label>
+                  <div style={{ position: 'relative' }}>
+                    <User style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: 'var(--gray-400)', pointerEvents: 'none' }} />
+                    <input type="text" value={formData.nombreCompleto} onChange={(e) => handleChange('nombreCompleto', e.target.value)} placeholder="Ej. Juan Pérez López" style={{ ...inputWithIconStyle, ...(formErrors.nombreCompleto ? inputErrorStyle : {}) }} />
                   </div>
-                  <div>
-                    <label style={labelStyle}>Apellido *</label>
-                    <input type="text" value={formData.apellido} onChange={(e) => handleChange('apellido', e.target.value)} placeholder="Apellido" style={{ ...inputBaseStyle, ...(formErrors.apellido ? inputErrorStyle : {}) }} />
-                    {formErrors.apellido && <ErrorMsg text={formErrors.apellido} />}
+                  {formErrors.nombreCompleto && <ErrorMsg text={formErrors.nombreCompleto} />}
+                </div>
+                <div>
+                  <label style={labelStyle}>Usuario y contraseña de la plataforma nacional JCF *</label>
+                  <div style={{ position: 'relative' }}>
+                    <Lock style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: 'var(--gray-400)', pointerEvents: 'none' }} />
+                    <input type="text" value={formData.credencialesJcf} onChange={(e) => handleChange('credencialesJcf', e.target.value)} placeholder="Usuario: ... Contraseña: ..." style={{ ...inputWithIconStyle, ...(formErrors.credencialesJcf ? inputErrorStyle : {}) }} />
                   </div>
+                  {formErrors.credencialesJcf && <ErrorMsg text={formErrors.credencialesJcf} />}
+                </div>
+                <div>
+                  <label style={labelStyle}>Link de documentos (Drive) *</label>
+                  <div style={{ position: 'relative' }}>
+                    <Link2 style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: 'var(--gray-400)', pointerEvents: 'none' }} />
+                    <input type="url" value={formData.linkPapeles} onChange={(e) => handleChange('linkPapeles', e.target.value)} placeholder="https://drive.google.com/..." style={{ ...inputWithIconStyle, ...(formErrors.linkPapeles ? inputErrorStyle : {}) }} />
+                  </div>
+                  {formErrors.linkPapeles && <ErrorMsg text={formErrors.linkPapeles} />}
                 </div>
 
                 <SectionTitle icon={Briefcase} text="Negocio" />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div>
-                    <label style={labelStyle}>Nombre del negocio</label>
-                    <input type="text" value={formData.nombreNegocio} onChange={(e) => handleChange('nombreNegocio', e.target.value)} placeholder="Nombre del negocio" style={inputBaseStyle} />
+                <div>
+                  <label style={labelStyle}>Nombre del negocio *</label>
+                  <input type="text" value={formData.nombreNegocio} onChange={(e) => handleChange('nombreNegocio', e.target.value)} placeholder="Nombre del negocio" style={{ ...inputBaseStyle, ...(formErrors.nombreNegocio ? inputErrorStyle : {}) }} />
+                  {formErrors.nombreNegocio && <ErrorMsg text={formErrors.nombreNegocio} />}
+                </div>
+                <div>
+                  <label style={labelStyle}>Link de información del negocio (Drive) *</label>
+                  <div style={{ position: 'relative' }}>
+                    <Link2 style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: 'var(--gray-400)', pointerEvents: 'none' }} />
+                    <input type="url" value={formData.linkImagenNegocio} onChange={(e) => handleChange('linkImagenNegocio', e.target.value)} placeholder="https://drive.google.com/..." style={{ ...inputWithIconStyle, ...(formErrors.linkImagenNegocio ? inputErrorStyle : {}) }} />
                   </div>
-                  <div>
-                    <label style={labelStyle}>Link del negocio</label>
-                    <div style={{ position: 'relative' }}>
-                      <Link2 style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: 'var(--gray-400)', pointerEvents: 'none' }} />
-                      <input type="text" value={formData.linkNegocio} onChange={(e) => handleChange('linkNegocio', e.target.value)} placeholder="https://..." style={inputWithIconStyle} />
-                    </div>
-                  </div>
+                  {formErrors.linkImagenNegocio && <ErrorMsg text={formErrors.linkImagenNegocio} />}
                 </div>
 
-                <SectionTitle icon={Shield} text="Estado y Encargado" />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                  <div>
-                    <label style={labelStyle}>Estado</label>
-                    <div style={{ position: 'relative' }}>
-                      <select value={formData.estadoKanban} onChange={(e) => handleChange('estadoKanban', e.target.value)} style={selectStyle}>
-                        <option value="ENCARGADO">Encargado</option>
-                        <option value="EN_PROCESO">En proceso</option>
-                        <option value="POSTULADO">Postulado</option>
-                      </select>
-                      <ChevronDown style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: 'var(--gray-400)', pointerEvents: 'none' }} />
+                <SectionTitle icon={Shield} text={modalMode === 'edit' ? 'Estado y Encargado' : 'Asignación de Encargado'} />
+                <div style={{ display: 'grid', gridTemplateColumns: modalMode === 'edit' ? '1fr 1fr' : '1fr', gap: '16px' }}>
+                  {modalMode === 'edit' && (
+                    <div>
+                      <label style={labelStyle}>Estado</label>
+                      <div style={{ position: 'relative' }}>
+                        <select value={formData.estadoKanban} onChange={(e) => handleChange('estadoKanban', e.target.value)} style={selectStyle}>
+                          <option value="ENCARGADO">Encargado</option>
+                          <option value="EN_PROCESO">En proceso</option>
+                          <option value="POSTULADO">Postulado</option>
+                        </select>
+                        <ChevronDown style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: 'var(--gray-400)', pointerEvents: 'none' }} />
+                      </div>
                     </div>
-                  </div>
+                  )}
                   <div>
-                    <label style={labelStyle}>Encargado</label>
+                    <label style={labelStyle}>Encargado *</label>
                     <div style={{ position: 'relative' }}>
-                      <select value={formData.encargadoId} onChange={(e) => handleChange('encargadoId', e.target.value)} style={selectStyle}>
-                        <option value="">Sin asignar</option>
+                      <select value={formData.encargadoId} onChange={(e) => handleChange('encargadoId', e.target.value)} style={{ ...selectStyle, ...(formErrors.encargadoId ? inputErrorStyle : {}) }}>
+                        <option value="">Seleccione un encargado...</option>
                         {encargados.map(enc => (
                           <option key={enc.id} value={enc.id}>
                             {enc.nombre} {enc.apellido} — {getRolName(enc.rol)}
@@ -573,6 +589,7 @@ const JovenesDistribucion = () => {
                       </select>
                       <ChevronDown style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: 'var(--gray-400)', pointerEvents: 'none' }} />
                     </div>
+                    {formErrors.encargadoId && <ErrorMsg text={formErrors.encargadoId} />}
                     <p style={{ marginTop: '5px', fontSize: '11px', color: 'var(--gray-400)', fontFamily: "'DM Sans', sans-serif" }}>
                       Solo se listan usuarios con rol Administrador, Líder JCF o Encargado JCF
                     </p>
@@ -605,7 +622,7 @@ const JovenesDistribucion = () => {
                 </div>
                 <div>
                   <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'var(--gray-900)' }}>
-                    {detailsItem.nombre} {detailsItem.apellido}
+                    {detailsItem.nombreCompleto || `${detailsItem.nombre} ${detailsItem.apellido}`}
                   </h2>
                   <p style={{ margin: 0, fontSize: '13px', color: 'var(--gray-500)', fontFamily: "'DM Sans', sans-serif" }}>Detalles completos del joven</p>
                 </div>
@@ -617,11 +634,19 @@ const JovenesDistribucion = () => {
 
             <div style={{ overflowY: 'auto', flex: 1, padding: '24px', display: 'flex', flexDirection: 'column', gap: '28px' }}>
               <div>
-                <SectionTitle icon={User} text="Información Personal y Negocio" />
+                <SectionTitle icon={User} text="Información del Joven" />
                 <div style={{ marginTop: '12px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
-                  <InfoRow label="Nombre Completo" value={`${detailsItem.nombre} ${detailsItem.apellido}`} icon={User} />
-                  <InfoRow label="Negocio" value={detailsItem.nombreNegocio} icon={Briefcase} />
-                  <InfoRow label="Link del Negocio" value={detailsItem.linkNegocio} icon={Link2} isLink />
+                  <InfoRow label="Nombre Completo" value={detailsItem.nombreCompleto || `${detailsItem.nombre} ${detailsItem.apellido}`} icon={User} />
+                  <InfoRow label="Usuario/Contraseña JCF" value={detailsItem.credencialesJcf} icon={Lock} />
+                  <InfoRow label="Link de Documentos" value={detailsItem.linkPapeles} icon={Link2} isLink />
+                </div>
+              </div>
+
+              <div>
+                <SectionTitle icon={Briefcase} text="Negocio" />
+                <div style={{ marginTop: '12px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', background: '#fff', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', padding: '16px' }}>
+                  <InfoRow label="Nombre del Negocio" value={detailsItem.nombreNegocio} icon={Briefcase} />
+                  <InfoRow label="Link de Información" value={detailsItem.linkImagenNegocio} icon={Link2} isLink />
                 </div>
               </div>
 
